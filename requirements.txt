@@ -6,3 +6,4 @@ pydantic-settings
 qdrant-client
 selectolax
 structlog
+tqdm

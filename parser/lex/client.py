@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import re
+import threading
 import time
 from pathlib import Path
 from urllib.robotparser import RobotFileParser
@@ -28,6 +29,7 @@ class LexClient:
         cache_dir: Path,
         timeout: float = 60.0,
         max_retries: int = 3,
+        concurrency: int = 1,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.cache_dir = Path(cache_dir)
@@ -43,12 +45,21 @@ class LexClient:
             timeout=timeout,
         )
         self._last_request = 0.0
+        self._lock = threading.Lock()
         self._robots = self._load_robots()
         robots_delay = self._robots.crawl_delay(USER_AGENT) or 0.0
         self.delay = max(delay, float(robots_delay))
         if self.delay > delay:
             logger.info(
                 "robots.txt Crawl-delay=%ss overrides configured delay %ss", robots_delay, delay
+            )
+        if concurrency > 1:
+            self.delay /= concurrency
+            logger.warning(
+                "concurrency=%s lowers the effective spacing to %.2fs, which exceeds the "
+                "rate declared in robots.txt",
+                concurrency,
+                self.delay,
             )
 
     def __enter__(self) -> "LexClient":
@@ -113,6 +124,8 @@ class LexClient:
                 if resp.status_code not in RETRY_STATUS:
                     resp.raise_for_status()
                     return resp.text
+                if resp.status_code == 429:
+                    self._slow_down()
                 last_error = httpx.HTTPStatusError(
                     f"status {resp.status_code}", request=resp.request, response=resp
                 )
@@ -125,10 +138,17 @@ class LexClient:
         ) from last_error
 
     def _wait(self) -> None:
-        elapsed = time.monotonic() - self._last_request
-        if self._last_request and elapsed < self.delay:
-            time.sleep(self.delay - elapsed)
-        self._last_request = time.monotonic()
+        with self._lock:
+            elapsed = time.monotonic() - self._last_request
+            if self._last_request and elapsed < self.delay:
+                time.sleep(self.delay - elapsed)
+            self._last_request = time.monotonic()
+
+    def _slow_down(self) -> None:
+        """A 429 means we are already too fast, so back off for the rest of the run."""
+        with self._lock:
+            self.delay *= 2
+        logger.warning("server returned 429, raising request spacing to %.2fs", self.delay)
 
     def _cache_path(self, key: str) -> Path:
         digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:12]
