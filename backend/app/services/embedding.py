@@ -170,3 +170,74 @@ class EmbeddingClient:
     def _retry_delay(body: str) -> float | None:
         match = RETRY_DELAY_RE.search(body)
         return float(match.group(1)) + 1 if match else None
+
+
+class LocalEmbeddingClient:
+    """Runs a sentence-transformers model on this machine: no keys, no quota.
+
+    e5 models are trained with asymmetric prefixes, so documents and queries must
+    be marked differently or retrieval quality drops sharply.
+    """
+
+    def __init__(self, model_name: str | None = None, dim: int | None = None) -> None:
+        self.model = model_name or settings.local_embed_model
+        self.dim = dim or settings.embed_dim
+        self._model = None
+        self._lock = asyncio.Lock()
+        self.request_count = 0
+
+    async def __aenter__(self) -> "LocalEmbeddingClient":
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        self._model = None
+
+    def _load(self):
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+
+            logger.info("loading local embedding model %s", self.model)
+            self._model = SentenceTransformer(self.model)
+            actual = self._model.get_sentence_embedding_dimension()
+            if actual != self.dim:
+                raise ValueError(
+                    f"{self.model} produces {actual} dimensions but EMBED_DIM is {self.dim}"
+                )
+        return self._model
+
+    def _prefix(self, task_type: str) -> str:
+        if "e5" not in self.model:
+            return ""
+        return "query: " if task_type == TASK_QUERY else "passage: "
+
+    def _encode(self, texts: list[str], task_type: str) -> list[list[float]]:
+        model = self._load()
+        prefix = self._prefix(task_type)
+        vectors = model.encode(
+            [prefix + text for text in texts],
+            batch_size=8,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
+        return [vector.tolist() for vector in vectors]
+
+    async def embed(self, texts: list[str], task_type: str) -> list[list[float]]:
+        # encoding is CPU bound, so it must not block the event loop
+        async with self._lock:
+            vectors = await asyncio.to_thread(self._encode, texts, task_type)
+        self.request_count += len(texts)
+        return vectors
+
+    async def embed_query(self, text: str) -> list[float]:
+        vectors = await self.embed([text], TASK_QUERY)
+        return vectors[0]
+
+
+def get_embedding_client():
+    """Pick the embedding backend named in the settings."""
+    if settings.embed_provider == "gemini":
+        return EmbeddingClient()
+    return LocalEmbeddingClient()

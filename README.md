@@ -101,9 +101,30 @@ Embedding natijalari `data/embeddings/` da keshlanadi, shuning uchun qayta
 indexlash API'ga qayta chiqmaydi va pul ketmaydi. Nuqta identifikatori
 `chunk_id` dan hosil qilinadi, ya'ni upsert idempotent.
 
-Bepul tarifda Gemini daqiqasiga 100 ta embedding so'roviga ruxsat beradi va
-batch ichidagi har bir element alohida so'rov hisoblanadi. Skript o'zi shu
-tezlikni ushlab turadi; 7 400 chunk uchun ~75 daqiqa ketadi.
+### Embedding qayerda hisoblanadi
+
+`EMBED_PROVIDER` ikki qiymat oladi:
+
+| Qiymat | Model | Cheklov |
+|---|---|---|
+| `local` (standart) | `intfloat/multilingual-e5-base` | Yo'q — shu mashinada ishlaydi |
+| `gemini` | `gemini-embedding-001` | Bepul tarifda kuniga 1 000 so'rov |
+
+Gemini bepul tarifi bu korpus uchun yaramaydi: 7 430 chunkni indexlash 7 kun
+talab qiladi (`EmbedContentRequestsPerDayPerProjectPerModel-FreeTier` = 1000).
+Shuning uchun standart holatda lokal model ishlatiladi — u bir marta yuklab
+olinadi (~1.1 GB) va keyin internet ham, pul ham kerak emas.
+
+O'zbek tilida uchta lokal model o'lchandi (10 ta savol, ground truth bilan):
+
+| Model | O'lchov | recall@5 | MRR |
+|---|---|---:|---:|
+| `multilingual-e5-base` | 768 | 0.80 | 0.595 |
+| `multilingual-e5-small` | 384 | 0.50 | 0.417 |
+| `paraphrase-multilingual-MiniLM-L12-v2` | 384 | 0.10 | 0.114 |
+
+e5 modellari hujjat va so'rovni turlicha belgilashni talab qiladi
+(`passage:` va `query:` prefikslari) — bu kodda hisobga olingan.
 
 ### Sparse kodlash haqida
 

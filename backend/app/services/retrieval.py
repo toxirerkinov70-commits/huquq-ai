@@ -7,7 +7,7 @@ from qdrant_client import AsyncQdrantClient, models
 
 from ..config import settings
 from . import aliases
-from .embedding import EmbeddingClient
+from .embedding import get_embedding_client
 from .sparse import encode_query
 
 logger = logging.getLogger(__name__)
@@ -137,11 +137,11 @@ class Retriever:
     def __init__(
         self,
         qdrant: AsyncQdrantClient | None = None,
-        embedder: EmbeddingClient | None = None,
+        embedder=None,
         collection: str | None = None,
     ) -> None:
         self.qdrant = qdrant or AsyncQdrantClient(url=settings.qdrant_url, timeout=60)
-        self.embedder = embedder or EmbeddingClient()
+        self.embedder = embedder or get_embedding_client()
         self.collection = collection or settings.qdrant_collection
 
     async def close(self) -> None:

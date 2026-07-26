@@ -19,8 +19,8 @@ from backend.app.config import settings  # noqa: E402
 from backend.app.services.embedding import (  # noqa: E402
     DEFAULT_BATCH,
     TASK_DOCUMENT,
-    EmbeddingClient,
     EmbeddingError,
+    get_embedding_client,
 )
 from backend.app.services.sparse import encode_document  # noqa: E402
 
@@ -147,7 +147,7 @@ async def index_chunks(
     qdrant: QdrantClient,
     name: str,
     chunks: list[dict],
-    client: EmbeddingClient,
+    client,
     batch_size: int,
 ) -> tuple[int, int, list[str]]:
     """Embed and upsert window by window so Qdrant fills up as the run progresses."""
@@ -217,22 +217,28 @@ async def main_async(args: argparse.Namespace) -> int:
     qdrant = QdrantClient(url=settings.qdrant_url, timeout=120)
     ensure_collection(qdrant, settings.qdrant_collection, settings.embed_dim, args.recreate)
 
-    async with EmbeddingClient() as embedder:
+    async with get_embedding_client() as embedder:
+        logger.info("embedding with %s (%s)", embedder.model, settings.embed_provider)
         cached, embedded_chars, failed = await index_chunks(
             qdrant, settings.qdrant_collection, chunks, embedder, args.batch_size
         )
 
     info = qdrant.get_collection(settings.qdrant_collection)
     approx_tokens = int(embedded_chars / 3.5)
+    cost = (
+        approx_tokens / 1_000_000 * USD_PER_MILLION_TOKENS
+        if settings.embed_provider == "gemini"
+        else 0.0
+    )
     logger.info(
-        "done: %s chunks selected, %s from cache, %s failed, %s API calls, "
+        "done: %s chunks selected, %s from cache, %s failed, %s embedded, "
         "~%s tokens, ~$%.4f; collection now holds %s points",
         len(chunks),
         cached,
         len(failed),
         embedder.request_count,
         approx_tokens,
-        approx_tokens / 1_000_000 * USD_PER_MILLION_TOKENS,
+        cost,
         info.points_count,
     )
     if failed:
