@@ -62,4 +62,26 @@ Guruhlar hajmi (`status=Y&minor=N` filtri bilan, 2026-07 holatiga):
 | 7 Idoraviy hujjatlar | 1 216 | 6.8 soat |
 | 8 Xalqaro hujjatlar | 1 510 | 8.4 soat |
 
+## Matn ajratish va chunking
+
+```bash
+python parser/run_extract.py                    # yuklangan hammasi
+python parser/run_extract.py --group 2
+python parser/run_extract.py --doc-id -111453   # bitta hujjat
+```
+
+Uch qatlam hosil bo'ladi:
+
+| Fayl | Mazmun |
+|---|---|
+| `data/raw/{doc_id}.html` | lex.uz dan kelgan asl sahifa, o'zgartirilmaydi |
+| `data/markdown/{doc_id}.md` | frontmatter + `#` bo'lim / `##` bob / `###` modda |
+| `data/chunks.jsonl` | metadata bilan modda darajasidagi chunklar |
+
+Skript reyestrni ham boyitadi: `adopted_date`, `effective_date`, `okoz`, `tsz`,
+`script` va modda soni hujjat sahifasidan olinadi.
+
+Chunk `source_url` da modda anchor'i bo'ladi (`...#-154738`), ya'ni havola
+to'g'ridan-to'g'ri o'sha moddaga olib boradi.
+
 To'liq hujjat 10-bosqichda yoziladi.
