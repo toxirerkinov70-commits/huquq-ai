@@ -6,12 +6,15 @@ from typing import AsyncIterator
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
+from ..config import settings
 from ..db import sqlite
 from ..models import ChatRequest, ChatResponse
 from ..services import agents as agents_service
+from ..services import aliases
 from ..services import generate as generate_service
+from ..services.rerank import TOP_N as RERANK_TOP_N
 from ..services.rerank import rerank
-from ..services.retrieval import expand_query, rewrite_followup
+from ..services.retrieval import detect_article_no, expand_query, rewrite_followup
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["chat"])
@@ -33,11 +36,23 @@ async def _prepare(request: Request, payload: ChatRequest) -> tuple:
     llm = request.app.state.llm
 
     search_query = await rewrite_followup(payload.question, history, llm)
-    variants = await expand_query(search_query, llm)
+
+    # a question that names an article or a code is already precisely targeted,
+    # so paraphrasing it only spends quota
+    targeted = detect_article_no(search_query) or aliases.detect_documents(search_query)
+    variants = (
+        await expand_query(search_query, llm)
+        if settings.enable_query_expansion and not targeted
+        else []
+    )
+
     hits = await retriever.hybrid_search(
         search_query, k=CANDIDATE_K, filters=agent.filters(), variants=variants
     )
-    hits = await rerank(search_query, hits, llm)
+    if settings.enable_rerank:
+        hits = await rerank(search_query, hits, llm)
+    else:
+        hits = hits[:RERANK_TOP_N]
     return agent, session_id, history, hits
 
 

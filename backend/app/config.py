@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     gemini_embed_model: str = "gemini-embedding-001"
     local_embed_model: str = "intfloat/multilingual-e5-base"
     embed_dim: int = 768
+    # each of these costs one extra LLM call per question; the free tier is limited
+    enable_query_expansion: bool = True
+    enable_rerank: bool = True
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "uz_legal"
     sqlite_path: str = "./data/app.db"
