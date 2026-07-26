@@ -5,5 +5,6 @@ pydantic
 pydantic-settings
 qdrant-client
 selectolax
+slowapi
 structlog
 tqdm

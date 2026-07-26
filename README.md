@@ -84,4 +84,64 @@ Skript reyestrni ham boyitadi: `adopted_date`, `effective_date`, `okoz`, `tsz`,
 Chunk `source_url` da modda anchor'i bo'ladi (`...#-154738`), ya'ni havola
 to'g'ridan-to'g'ri o'sha moddaga olib boradi.
 
+## Qdrant'ga indexatsiya
+
+```bash
+python scripts/index.py                 # chunks.jsonl dagi hammasi
+python scripts/index.py --group 2       # bitta guruh
+python scripts/index.py --recreate      # kolleksiyani qaytadan qurish
+```
+
+Kolleksiya ikkita vektor saqlaydi: `dense` (768, cosine) va `sparse` (BM25,
+Qdrant `IDF` modifikatori bilan). Hammasi `on_disk` — 8 GB RAM uchun majburiy.
+Payload indekslari: `doc_id`, `doc_type`, `act_type`, `article_no`, `okoz`,
+`tsz`, `status`, `group`.
+
+Embedding natijalari `data/embeddings/` da keshlanadi, shuning uchun qayta
+indexlash API'ga qayta chiqmaydi va pul ketmaydi. Nuqta identifikatori
+`chunk_id` dan hosil qilinadi, ya'ni upsert idempotent.
+
+Bepul tarifda Gemini daqiqasiga 100 ta embedding so'roviga ruxsat beradi va
+batch ichidagi har bir element alohida so'rov hisoblanadi. Skript o'zi shu
+tezlikni ushlab turadi; 7 400 chunk uchun ~75 daqiqa ketadi.
+
+### Sparse kodlash haqida
+
+O'zbek tili agglyutinativ: so'rovda `poytaxt`, matnda `poytaxti` — aniq so'z
+mosligi ishlamaydi. Shuning uchun sparse vektorga to'liq so'z bilan birga
+uning 4-belgili n-grammalari ham (kichikroq og'irlik bilan) qo'shiladi.
+To'liq korpusda o'lchangan natija: MRR 0.327 → 0.475.
+
+## Backend va frontend
+
+```bash
+uvicorn backend.app.main:app --reload
+```
+
+Brauzerda `http://localhost:8000` — chat interfeysi shu yerda ochiladi.
+
+| Metod | Yo'l | Vazifa |
+|---|---|---|
+| POST | `/api/chat` | Savol → SSE streaming javob va manbalar |
+| POST | `/api/search` | Faqat retrieval natijasi (debug) |
+| GET | `/api/agents` | Agent rejimlari |
+| GET | `/api/documents` | Hujjatlar reyestri |
+| GET | `/api/document/{doc_id}` | Bitta hujjat va uning moddalari |
+| GET | `/health` | Holat va indexdagi nuqtalar soni |
+
+Qidiruv quvuri: savolni suhbat tarixiga qarab mustaqil savolga aylantirish →
+LLM orqali 2 ta muqobil formulirovka → dense va sparse qidiruv → RRF birlashtirish
+→ modda raqami bo'yicha to'g'ridan-to'g'ri filtr → LLM rerank (top-6) → javob.
+
+## Baholash
+
+```bash
+python eval/run.py                  # gibrid
+python eval/run.py --mode sparse    # embedding API'siz ishlaydi
+python eval/run.py --verbose
+```
+
+`recall@5`, `recall@10` va MRR ni savol turlari (semantik, modda raqami,
+kodeks nomi) bo'yicha alohida hisoblaydi.
+
 To'liq hujjat 10-bosqichda yoziladi.

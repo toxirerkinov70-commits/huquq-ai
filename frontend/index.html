@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huquqiy yordamchi — O'zbekiston qonunchiligi</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">§</span>
+    <span>Huquqiy yordamchi</span>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-view="chat">Suhbat</button>
+    <button class="tab" data-view="docs">Hujjatlar</button>
+  </nav>
+</header>
+
+<main>
+  <section id="view-chat" class="view active">
+    <div class="agents" id="agents"></div>
+
+    <div class="messages" id="messages">
+      <div class="empty" id="empty">
+        <h1>O'zbekiston qonunchiligi bo'yicha savol bering</h1>
+        <p>Javob har doim qonun moddasiga tayanadi va manba havolasi bilan beriladi.</p>
+        <div class="samples">
+          <button class="sample">Nikoh qaysi yoshdan tuzilishi mumkin?</button>
+          <button class="sample">Fuqarolik kodeksining 173-moddasi nima haqida?</button>
+          <button class="sample">Ish haqi qanday muddatlarda to'lanadi?</button>
+        </div>
+      </div>
+    </div>
+
+    <form class="composer" id="composer">
+      <textarea id="question" rows="1" placeholder="Savolingizni yozing..." autocomplete="off"></textarea>
+      <button type="submit" id="send" title="Yuborish">→</button>
+    </form>
+    <p class="disclaimer">Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.</p>
+  </section>
+
+  <section id="view-docs" class="view">
+    <div class="docs-search">
+      <input id="doc-query" type="search" placeholder="Hujjat nomi bo'yicha qidirish...">
+    </div>
+    <div class="doc-list" id="doc-list"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <button class="modal-close" id="modal-close">×</button>
+    <div class="modal-head">
+      <h2 id="modal-title"></h2>
+      <a id="modal-link" href="#" target="_blank" rel="noopener">lex.uz da ochish ↗</a>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
