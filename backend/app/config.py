@@ -6,6 +6,12 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     gemini_llm_model: str = "gemini-2.5-flash"
+    # each model carries its own free-tier daily allowance, so exhausting one does
+    # not block the others; the client walks this list when a model is spent
+    gemini_llm_fallbacks: str = (
+        "gemini-2.5-flash-lite,gemini-flash-latest,gemini-flash-lite-latest,"
+        "gemini-3.5-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite"
+    )
     # "local" runs the embedding model on this machine and has no quota;
     # "gemini" uses the API, which on the free tier allows 1000 requests a day
     embed_provider: str = "local"
