@@ -13,11 +13,15 @@ ALIASES: dict[str, str] = {
     "fuqarolik kodeksi": "fuqarolik kodeksi",
     "gk": "fuqarolik kodeksi",
     "fpk": "fuqarolik protsessual",
+    # the procedural codes are named in full far more often than by abbreviation
+    "fuqarolik protsessual": "fuqarolik protsessual",
     "jk": "jinoyat kodeksi",
     "jinoyat kodeksi": "jinoyat kodeksi",
     "uk": "jinoyat kodeksi",
     "jpk": "jinoyat-protsessual",
+    "jinoyat-protsessual": "jinoyat-protsessual",
     "jik": "jinoyat-ijroiya",
+    "jinoyat-ijroiya": "jinoyat-ijroiya",
     "sk": "soliq kodeksi",
     "soliq kodeksi": "soliq kodeksi",
     "nk": "soliq kodeksi",
@@ -35,8 +39,12 @@ ALIASES: dict[str, str] = {
     "buk": "budjet kodeksi",
     "budjet kodeksi": "budjet kodeksi",
     "ipk": "iqtisodiy protsessual",
+    "iqtisodiy protsessual": "iqtisodiy protsessual",
     "mjk": "ma'muriy javobgarlik",
-    "maʼmuriy javobgarlik kodeksi": "ma'muriy javobgarlik",
+    # keys are looked up through normalize(), so they must use the plain apostrophe
+    "ma'muriy javobgarlik kodeksi": "ma'muriy javobgarlik",
+    "msiyk": "ma'muriy sud ishlarini yuritish",
+    "ma'muriy sud ishlarini yuritish": "ma'muriy sud ishlarini yuritish",
     "shk": "shaharsozlik kodeksi",
     "suv kodeksi": "suv kodeksi",
     "havo kodeksi": "havo kodeksi",
@@ -44,11 +52,12 @@ ALIASES: dict[str, str] = {
     "konstitutsiya": "konstitutsiya",
 }
 
-# short aliases are ambiguous inside normal prose, so they must stand alone
+# short aliases are ambiguous inside normal prose, so they must stand alone; the longer
+# entries are distinctive phrases and are matched as plain substrings instead
 SHORT_ALIAS_RE = {
     alias: re.compile(rf"(?<![\w'])({alias})(?:ning|da|dagi|ga|ni|si)?(?![\w'])", re.IGNORECASE)
     for alias in ALIASES
-    if len(alias) <= 4
+    if len(alias) <= 5
 }
 
 
