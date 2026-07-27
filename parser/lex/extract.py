@@ -31,6 +31,10 @@ TOOLBAR_LABELS = (
     "Hujjat elementidan havola olish",
 )
 
+# bumped whenever extraction changes the produced text, so the update pipeline can tell
+# a real amendment from a re-extraction of the same source
+EXTRACTOR_VERSION = 2
+
 BODY_SELECTOR = "#divCont"
 SKIP_CLASSES = {"COMMENT", "COMMENTLEXUZ", "INDEXES_ON_REF"}
 
@@ -112,8 +116,11 @@ class Document:
         return list(seen)
 
     def content_hash(self) -> str:
-        payload = "\n".join(article.heading + "\n" + article.text for article in self.articles)
-        return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        # the preamble belongs in the hash: a law without articles carries its whole
+        # text there, and hashing articles alone gives every such document the same digest
+        parts = list(self.preamble)
+        parts += [article.heading + "\n" + article.text for article in self.articles]
+        return "sha256:" + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
 
 
 def preprocess(html: str) -> str:
@@ -373,6 +380,7 @@ def to_markdown(document: Document, meta: dict) -> str:
         "script": document.script,
         "articles": len(document.articles),
         "content_hash": document.content_hash(),
+        "extractor_version": EXTRACTOR_VERSION,
         "fetched_at": meta.get("fetched_at", ""),
     }
 

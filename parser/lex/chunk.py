@@ -16,6 +16,8 @@ CHARS_PER_TOKEN = 3.5
 SENTENCE_BOUNDARY = re.compile(r"(?<=[.;:])\s+")
 CLAUSE_BOUNDARY = re.compile(r"(?<=,)\s+")
 
+PREAMBLE_KEY = "preamble"
+
 
 def estimate_tokens(text: str) -> int:
     return int(len(text) / CHARS_PER_TOKEN)
@@ -92,6 +94,22 @@ def _build_embedding_text(
     return "\n".join(header) + "\n" + text
 
 
+def _preamble_article(document: Document) -> Article:
+    """Ratification and other short laws keep their whole normative text before the first
+    article heading, so chunking articles alone drops the document from the index."""
+    return Article(
+        article_no=None,
+        article_no_display=None,
+        title=document.title,
+        element_id=None,
+        part=None,
+        section=None,
+        chapter=None,
+        paragraph=None,
+        blocks=list(document.preamble),
+    )
+
+
 def chunk_document(document: Document, meta: dict) -> list[dict]:
     doc_title = document.title or meta.get("title", "")
     base_url = meta.get("url") or f"https://lex.uz/uz/docs/{document.doc_id}"
@@ -99,9 +117,16 @@ def chunk_document(document: Document, meta: dict) -> list[dict]:
     doc_tsz = document.tsz
     adopted_date = meta.get("adopted_date") or document.adopted_date
 
+    articles = document.articles
+    fallback_key: str | None = None
+    if not any(article.text.strip() for article in articles) and document.preamble:
+        articles = [_preamble_article(document)]
+        fallback_key = PREAMBLE_KEY
+        logger.info("%s: no articles, chunking the preamble instead", document.doc_id)
+
     chunks: list[dict] = []
     previous: Article | None = None
-    for article in document.articles:
+    for article in articles:
         if not article.text.strip():
             previous = article
             continue
@@ -111,7 +136,7 @@ def chunk_document(document: Document, meta: dict) -> list[dict]:
             text = "\n\n".join(block for block in blocks if block.strip())
             if not text.strip():
                 continue
-            article_key = article.article_no or f"x{len(chunks)}"
+            article_key = article.article_no or fallback_key or f"x{len(chunks)}"
             source_url = f"{base_url}#{article.element_id}" if article.element_id else base_url
             chunks.append(
                 {
