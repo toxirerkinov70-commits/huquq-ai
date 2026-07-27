@@ -183,15 +183,23 @@ kodeks nomi) bo'yicha alohida hisoblaydi.
 sinash uchun `tag` bilan belgilangan: yuqori indeksli modda raqamlari
 (`289¹`), matni jadval bo'lgan moddalar, bir gaplik moddalar.
 
-Kodekslar ustida o'lchangan natija:
+Savollar 21 kodeksga bog'langan, shuning uchun 562 qonun qo'shilishi ular uchun
+sof shovqin — korpus kattalashishining narxini shu bilan o'lchash mumkin:
 
-| Rejim | recall@5 | recall@10 | MRR |
+| Rejim | recall@5 (7 430 chunk) | recall@5 (20 249 chunk) | MRR |
 |---|---:|---:|---:|
-| hybrid | 0.98 | 0.98 | 0.869 |
-| dense | 0.62 | 0.74 | 0.561 |
-| sparse | 0.70 | 0.76 | 0.557 |
+| hybrid | 0.98 | **0.98** | 0.869 → 0.859 |
+| dense | 0.62 | 0.56 | 0.561 → 0.523 |
+| sparse | 0.70 | 0.60 | 0.557 → 0.509 |
 
-Modda raqamli savollarda gibrid 1.00 beradi, dense va sparse alohida esa 0.08 —
+Korpus 2.7 baravar kattaydi. Sof vektor qidiruv recall@5 ni 6 punkt, sof
+kalit so'z qidiruvi 10 punkt yo'qotdi — ya'ni "ma'lumot ko'paygani sari
+qidiruv susayadi" degan xavotir asosli. Gibrid esa deyarli o'zgarmadi,
+chunki modda raqami va hujjat nomi detektorlari nomzodlar to'plamini
+reyting bosqichidan **oldin** toraytiradi: qo'shilgan hujjatlar raqobatga
+umuman kirmaydi.
+
+Modda raqamli savollarda gibrid 1.00 beradi, dense 0.08, sparse 0.00 —
 gibrid arxitektura shu turdagi savollar uchun kerak.
 
 ## Deploy
