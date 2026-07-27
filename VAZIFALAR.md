@@ -26,18 +26,18 @@ bo'ladi yoki loyiha to'xtaydi.
 
 Ustuvorlik bo'yicha tartiblangan. "Vaqt" — mashina ishlaydigan vaqt, sizniki emas.
 
-| # | Vazifa | Bosqich | Vaqt | Bog'liqlik |
+| # | Vazifa | Bosqich | Vaqt | Holat |
 |---|---|---|---|---|
-| 1 | Qonunlar matnini yuklash va indexlash | 9 | ~3.5 soat | — |
-| 2 | Sud amaliyotini qo'shish | 9 | ~3.5 soat | — |
-| 3 | Baholashni 50 savolga kengaytirish | 10 | dasturlash | 1, 2 |
-| 4 | Docker deploy va backup | 10 | dasturlash | — |
-| 5 | Prezident hujjatlari | 9 | ~22 soat | — |
-| 6 | Hukumat qarorlari | 9 | ~28 soat | — |
-| 7 | Idoraviy hujjatlar | 9 | ~8 soat | — |
-| 8 | Xalqaro hujjatlar | 9 | ~10 soat | — |
-| 9 | Avtomatik yangilanish | 11 | dasturlash | 4 |
-| 10 | Tool calling | 12 | dasturlash | — |
+| 1 | Qonunlar matnini yuklash va indexlash | 9 | ~3.5 soat | bajarilmoqda |
+| 2 | Sud amaliyotini qo'shish | 9 | ~3.5 soat | navbatda |
+| 3 | Baholashni 50 savolga kengaytirish | 10 | dasturlash | tugadi |
+| 4 | Docker deploy va backup | 10 | dasturlash | tugadi |
+| 5 | Avtomatik yangilanish | 11 | dasturlash | 4 dan keyin |
+| 6 | Tool calling | 12 | dasturlash | — |
+
+Baza 1, 2, 3 va 6-guruh bilan cheklandi. Prezident hujjatlari, hukumat
+qarorlari, idoraviy va xalqaro hujjatlar (jami ~10 800 hujjat, ~64 soat
+yuklash) **rejadan chiqarildi** — pastdagi izohga qarang.
 
 ---
 
@@ -122,25 +122,32 @@ lokal model yana ~1.5 GB oladi. Sig'ishini tekshiring.
 
 ---
 
-## Vazifalar 5-8 — Qolgan guruhlar
+## Rejadan chiqarilgan guruhlar
 
-| Guruh | Hujjat | Yuklash | Izoh |
-|---|---:|---:|---|
-| 4. Prezident hujjatlari | 3 526 | ~19.6 soat | Amaliy normalar |
-| 5. Hukumat qarorlari | 4 588 | ~25.5 soat | Nizom va tartiblar — amaliy savollar uchun qimmatli |
-| 7. Idoraviy hujjatlar | 1 216 | ~6.8 soat | Eng kam qiymatli |
-| 8. Xalqaro hujjatlar | 1 510 | ~8.4 soat | Oxirida |
+| Guruh | Hujjat | Yuklash |
+|---|---:|---:|
+| 4. Prezident hujjatlari | 3 526 | ~19.6 soat |
+| 5. Hukumat qarorlari | 4 588 | ~25.5 soat |
+| 7. Idoraviy hujjatlar | 1 216 | ~6.8 soat |
+| 8. Xalqaro hujjatlar | 1 510 | ~8.4 soat |
 
-Har biri uchun bir xil to'rt qadam (discover → fetch → extract → index).
-Har guruhdan keyin `eval/run.py` ni ishga tushirib, recall pasaymaganini
-tekshiring — korpus kattalashgani sari shovqin ortadi.
+Sabab hajm emas, hujjat turi. Bu guruhlarning katta qismi bir martalik,
+vaziyatga oid hujjatlar ("falon lavozimga tayinlansin", "falon mablag'
+ajratilsin") — ular yangi huquqiy norma qo'shmaydi, lekin qidiruvda
+kodekslar va qonunlar bilan raqobatlashadigan nomzod sifatida chiqadi.
 
-Bu guruhlar bir necha kunlik ish. Kechasi fonda qoldirish mumkin, skriptlar
-uzilishdan tiklanadi.
+Nimadan voz kechildi: 5-guruhdagi nizom va tartiblar amaliy tartib-taomil
+savollari uchun qimmatli edi. Ular bo'lmagani uchun "qanday hujjat
+topshiriladi, qancha to'lov" turidagi savollarga tizim javob bermaydi va
+"bazada aniq norma topilmadi" deydi.
+
+Agar keyinchalik qaytarilsa: parser sakkizala guruhni qo'llab-quvvatlaydi,
+`--group N` bilan ishlaydi. Har guruhdan keyin `eval/run.py` ni ishga
+tushirib, recall pasaymaganini tekshiring.
 
 ---
 
-## Vazifa 9 — Avtomatik yangilanish (11-bosqich)
+## Vazifa 5 — Avtomatik yangilanish (11-bosqich)
 
 CLAUDE.md da batafsil yozilgan. Asosiy nuqtalar:
 
@@ -158,7 +165,7 @@ o'zgarishni aniqlash shu orqali ishlaydi.
 
 ---
 
-## Vazifa 10 — Tool calling (12-bosqich)
+## Vazifa 6 — Tool calling (12-bosqich)
 
 LLM ga vositalar berish: qidiruv, modda olish, hujjat ro'yxati. CLAUDE.md
 ning oxirgi bo'limiga qarang.
