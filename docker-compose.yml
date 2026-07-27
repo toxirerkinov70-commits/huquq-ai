@@ -11,5 +11,25 @@ services:
     mem_limit: 2g
     restart: unless-stopped
 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+    volumes:
+      - ./data:/app/data
+      # the embedding model is ~1.1 GB and is downloaded once into this volume rather
+      # than baked into the image
+      - hf_models:/models
+    depends_on:
+      - qdrant
+    mem_limit: 3g
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:
+  hf_models:
