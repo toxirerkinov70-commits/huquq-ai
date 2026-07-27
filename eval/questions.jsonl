@@ -13,3 +13,38 @@
 {"id": 13, "kind": "doc_name", "question": "FK boʻyicha servitut qanday tartibga solingan?", "doc_id": "-111189", "article_no": "173"}
 {"id": 14, "kind": "doc_name", "question": "MK da ish haqini toʻlash muddatlari qanday?", "doc_id": "-6257288", "article_no": "253"}
 {"id": 15, "kind": "doc_name", "question": "Soliq kodeksida soliq stavkasi qanday belgilanadi?", "doc_id": "-4674902", "article_no": "72"}
+{"id": 16, "kind": "semantic", "question": "Oʻzbekistonning poytaxti qaysi shahar?", "doc_id": "-6445145", "article_no": "6", "tag": "short_article"}
+{"id": 17, "kind": "semantic", "question": "Oliy Majlis nechta palatadan iborat?", "doc_id": "-6445145", "article_no": "91"}
+{"id": 18, "kind": "semantic", "question": "Viloyat hokimining vakolat muddati necha yil?", "doc_id": "-6445145", "article_no": "121"}
+{"id": 19, "kind": "semantic", "question": "Oʻzbekiston bank tizimi nimalardan iborat?", "doc_id": "-6445145", "article_no": "151"}
+{"id": 20, "kind": "semantic", "question": "Sinov muddati qaysi kundan boshlab hisoblanadi?", "doc_id": "-163629", "article_no": "179", "tag": "short_article"}
+{"id": 21, "kind": "semantic", "question": "Qanday yerlar sugʻoriladigan yerlar hisoblanadi?", "doc_id": "-152653", "article_no": "44"}
+{"id": 22, "kind": "semantic", "question": "Turar joydan umrbod foydalanish huquqi qanday hollarda vujudga keladi?", "doc_id": "-106136", "article_no": "121"}
+{"id": 23, "kind": "semantic", "question": "Saylovchi sogʻligʻi sababli ovoz berish binosiga kela olmasa nima qilinadi?", "doc_id": "-4386848", "article_no": "56"}
+{"id": 24, "kind": "semantic", "question": "Maʼmuriy jazo huquqbuzarlik sodir etilgandan keyin qancha muddat ichida qoʻllanilishi mumkin?", "doc_id": "-97664", "article_no": "36"}
+{"id": 25, "kind": "semantic", "question": "Texnik koʻrikdan oʻtkazilmagan transport vositasini yoʻlga chiqarganlik uchun qanday javobgarlik belgilangan?", "doc_id": "-97664", "article_no": "139"}
+{"id": 26, "kind": "semantic", "question": "Bojxona ombori rejimi nimani anglatadi?", "doc_id": "-2876354", "article_no": "90"}
+{"id": 27, "kind": "semantic", "question": "Budjet ijrosi uchun qoʻshimcha vaqt davri qaysi oy hisoblanadi?", "doc_id": "-2304138", "article_no": "110"}
+{"id": 28, "kind": "semantic", "question": "Aviatsiya ishlari bilan bogʻliq daʼvolar qancha muddat ichida qilinishi mumkin?", "doc_id": "-55594", "article_no": "135"}
+{"id": 29, "kind": "semantic", "question": "Yuqori sud quyi sud sudloviga tegishli jinoyat ishini oʻzi koʻrishi mumkinmi?", "doc_id": "-111460", "article_no": "390"}
+{"id": 30, "kind": "semantic", "question": "Kompleks ekspertiza qanday hollarda tayinlanadi?", "doc_id": "-3523891", "article_no": "85"}
+{"id": 31, "kind": "semantic", "question": "Ajrimning koʻchirma nusxalari qancha muddat ichida yuboriladi?", "doc_id": "-3527353", "article_no": "171"}
+{"id": 32, "kind": "semantic", "question": "Shifobaxsh suvlar toifasiga kiritilgan suv obyektlaridan avvalo qanday maqsadda foydalaniladi?", "doc_id": "-7655343", "article_no": "91"}
+{"id": 33, "kind": "semantic", "question": "Banklar uchun foyda soligʻi stavkasi necha foiz?", "doc_id": "-4674902", "article_no": "337", "tag": "table"}
+{"id": 34, "kind": "semantic", "question": "Norezidentning dividendlari va foizlaridan qanday stavkada soliq undiriladi?", "doc_id": "-4674902", "article_no": "353", "tag": "table"}
+{"id": 35, "kind": "article_no", "question": "Soliq kodeksining 289-1-moddasida qanday stavkalar belgilangan?", "doc_id": "-4674902", "article_no": "289-1", "tag": "superscript,table"}
+{"id": 36, "kind": "article_no", "question": "Soliq kodeksi 289-2-moddasi nimani belgilaydi?", "doc_id": "-4674902", "article_no": "289-2", "tag": "superscript,table"}
+{"id": 37, "kind": "article_no", "question": "Yer kodeksining 24-1-moddasi nima haqida?", "doc_id": "-152653", "article_no": "24-1", "tag": "superscript"}
+{"id": 38, "kind": "article_no", "question": "Maʼmuriy javobgarlik kodeksining 200-2-moddasida qanday huquqbuzarlik nazarda tutilgan?", "doc_id": "-97664", "article_no": "200-2", "tag": "superscript"}
+{"id": 39, "kind": "article_no", "question": "JPKning 586-5-moddasi nimani belgilaydi?", "doc_id": "-111460", "article_no": "586-5", "tag": "superscript"}
+{"id": 40, "kind": "article_no", "question": "Konstitutsiyaning 87-moddasi nima deydi?", "doc_id": "-6445145", "article_no": "87", "tag": "short_article"}
+{"id": 41, "kind": "article_no", "question": "Bojxona kodeksining 363-moddasi nima haqida?", "doc_id": "-2876354", "article_no": "363"}
+{"id": 42, "kind": "article_no", "question": "Iqtisodiy protsessual kodeksning 240-moddasi nimani nazarda tutadi?", "doc_id": "-3523891", "article_no": "240"}
+{"id": 43, "kind": "doc_name", "question": "JPK boʻyicha ehtiyot chorasi qanday hujjat bilan qoʻllaniladi?", "doc_id": "-111460", "article_no": "240"}
+{"id": 44, "kind": "doc_name", "question": "JIK da mahkumlarni ish bilan taʼminlash qanday tashkil etiladi?", "doc_id": "-163629", "article_no": "89"}
+{"id": 45, "kind": "doc_name", "question": "YK boʻyicha rekreatsiya maqsadlariga moʻljallangan yerlarga nimalar kiradi?", "doc_id": "-152653", "article_no": "74"}
+{"id": 46, "kind": "doc_name", "question": "UJK da vaqtincha yashovchilar qanday tartibda kiritiladi?", "doc_id": "-106136", "article_no": "61"}
+{"id": 47, "kind": "doc_name", "question": "SHK boʻyicha shaharsozlik hujjatlari qanday roʻyobga chiqariladi?", "doc_id": "-5307951", "article_no": "46"}
+{"id": 48, "kind": "doc_name", "question": "BuK da Oʻzbekiston Respublikasining davlat kafolati nima?", "doc_id": "-2304138", "article_no": "155"}
+{"id": 49, "kind": "doc_name", "question": "IPK boʻyicha dalillarni tekshirish qachon tiklanadi?", "doc_id": "-3523891", "article_no": "174"}
+{"id": 50, "kind": "doc_name", "question": "MJK da epidemiyalarga qarshi kurash qoidalarini buzganlik uchun qanday jazo belgilangan?", "doc_id": "-97664", "article_no": "54"}
