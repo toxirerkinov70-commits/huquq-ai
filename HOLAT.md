@@ -1,6 +1,6 @@
 # Loyiha holati
 
-**Sana:** 2026-07-29 · **Oxirgi commit:** `4f9b46d`
+**Sana:** 2026-07-29 · **Oxirgi commit:** `91522ee` dan keyingi UI-sinov seansi
 
 ---
 
@@ -30,6 +30,15 @@ Bu seansda (2026-07-29): tizim wakil.ai bilan solishtirilib uchta kamchilik yopi
    so'rovlarini chiqaradi, shu so'rovlar bilan baza qidirilib javob beriladi.
 4. **UI** — wakil.ai uslubidagi sidebar (logo, Yangi suhbat, Agentlar), vaqtga
    qarab salomlashuv ekrani, fayl biriktirish, markdown render, mobil menyu.
+
+Shu kuni ikkinchi seansda foydalanuvchining 12 ta UI/UX so'rovi bajarildi va
+sinovdan o'tkazildi (`YANGILANISHLAR.md` da to'liq ro'yxat): suhbat tarixi va
+sahifa yangilanganda tiklanish, manbalar 4 taga qisqarib faqat iqtibos
+qilinganlari qoladigan bo'ldi (`filter_cited_sources`), tungi/kunduzgi/tizim
+rejimlari, halqa ko'rinishidagi Agent rejimi tugmasi, yig'iladigan Agentlar
+bo'limi, global qidiruv oynasi, javobdan ajratilgan disclaimer bloki.
+Sinovlar: sessiya API'lari curl bilan, UI `scripts/ui_check.py` (Playwright,
+12/12) bilan, manba filtri ikki jonli savolda tekshirildi.
 
 Oldingi seansda: agentik rejim live qidiruvga o'tadigan bo'ldi, Plenum qarorlari
 topildi (4 tadan 185 taga), qidiruv sifati 0.94 → 0.96 ga ko'tarildi.
