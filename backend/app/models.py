@@ -1,11 +1,19 @@
 from pydantic import BaseModel, Field
 
 
+class Attachment(BaseModel):
+    name: str = Field(max_length=255)
+    mime: str = Field(max_length=100)
+    # base64 of at most ~10 MB of file bytes
+    data: str = Field(max_length=15_000_000)
+
+
 class ChatRequest(BaseModel):
     question: str = Field(min_length=2, max_length=2000)
     agent: str = "umumiy"
     session_id: str | None = None
     stream: bool = True
+    attachment: Attachment | None = None
 
 
 class Source(BaseModel):

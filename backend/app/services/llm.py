@@ -53,10 +53,17 @@ class LLMClient:
         await self._client.aclose()
 
     def _payload(
-        self, prompt: str, system: str | None, temperature: float, json_output: bool
+        self,
+        prompt: str,
+        system: str | None,
+        temperature: float,
+        json_output: bool,
+        extra_parts: list[dict] | None = None,
     ) -> dict:
+        # media parts (inline files) go before the text, as the API docs recommend
+        parts = (extra_parts or []) + [{"text": prompt}]
         payload: dict = {
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {"temperature": temperature},
         }
         if system:
@@ -120,8 +127,11 @@ class LLMClient:
         system: str | None = None,
         temperature: float = 0.2,
         json_output: bool = False,
+        extra_parts: list[dict] | None = None,
     ) -> str:
-        return _first_text(await self._send(self._payload(prompt, system, temperature, json_output)))
+        return _first_text(
+            await self._send(self._payload(prompt, system, temperature, json_output, extra_parts))
+        )
 
     async def generate_with_tools(
         self,
@@ -131,13 +141,15 @@ class LLMClient:
         system: str | None = None,
         temperature: float = 0.2,
         max_calls: int = 5,
+        extra_parts: list[dict] | None = None,
     ) -> str:
         """Let the model call tools, feed the results back, and return its final answer.
 
         The call budget is a hard stop rather than a suggestion: a model that keeps
         reaching for the live site would hammer lex.uz and leave the user waiting.
         """
-        contents: list[dict] = [{"role": "user", "parts": [{"text": prompt}]}]
+        parts = (extra_parts or []) + [{"text": prompt}]
+        contents: list[dict] = [{"role": "user", "parts": parts}]
         payload: dict = {
             "contents": contents,
             "generationConfig": {"temperature": temperature},
@@ -166,9 +178,13 @@ class LLMClient:
         return _first_text(await self._send(payload))
 
     async def stream(
-        self, prompt: str, system: str | None = None, temperature: float = 0.2
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.2,
+        extra_parts: list[dict] | None = None,
     ) -> AsyncIterator[str]:
-        payload = self._payload(prompt, system, temperature, json_output=False)
+        payload = self._payload(prompt, system, temperature, json_output=False, extra_parts=extra_parts)
         last_error = ""
         for attempt in range(self.max_retries):
             async with self._client.stream(
@@ -209,9 +225,13 @@ class LLMClient:
         raise LLMError(f"stream failed after {self.max_retries} attempts: {last_error}")
 
     async def generate_json(
-        self, prompt: str, system: str | None = None, temperature: float = 0.0
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.0,
+        extra_parts: list[dict] | None = None,
     ) -> object:
-        raw = await self.generate(prompt, system, temperature, json_output=True)
+        raw = await self.generate(prompt, system, temperature, json_output=True, extra_parts=extra_parts)
         return parse_json(raw)
 
 

@@ -34,15 +34,19 @@ async def answer_with_tools(
     llm: LLMClient,
     history: list[dict] | None = None,
     agent_prompt: str | None = None,
+    attachment_block: str | None = None,
+    extra_parts: list[dict] | None = None,
 ) -> tuple[str, list[dict], list[dict]]:
     """Returns the answer, its sources, and the log of what the model called."""
     toolbox = ToolBox(retriever)
     system = "\n\n".join(part for part in (SYSTEM_PROMPT, TOOL_RULES, agent_prompt) if part)
 
-    prompt = question
+    prompt = f"Savol: {question}"
+    if attachment_block:
+        prompt = f"{attachment_block}\n\n{prompt}"
     if history:
         turns = "\n".join(f"{item['role']}: {item['content']}" for item in history[-6:])
-        prompt = f"Suhbat tarixi:\n{turns}\n\nSavol: {question}"
+        prompt = f"Suhbat tarixi:\n{turns}\n\n{prompt}"
 
     answer = await llm.generate_with_tools(
         prompt,
@@ -50,6 +54,7 @@ async def answer_with_tools(
         toolbox.run,
         system=system,
         max_calls=MAX_TOOL_CALLS,
+        extra_parts=extra_parts,
     )
     if not answer.strip():
         answer = f"Bu savol bo'yicha bazada aniq norma topilmadi.\n\n{DISCLAIMER}"
