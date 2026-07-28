@@ -87,6 +87,19 @@ main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 16px 20p
 }
 .agent.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
+.mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.mode input { accent-color: var(--accent); cursor: pointer; margin: 0; }
+.mode:has(input:checked) { color: var(--accent); }
+
 .messages { display: flex; flex-direction: column; gap: 16px; min-height: 45vh; }
 
 .empty { text-align: center; padding: 36px 8px; color: var(--muted); }
@@ -137,6 +150,17 @@ main { flex: 1; width: 100%; max-width: 860px; margin: 0 auto; padding: 16px 20p
 .source:hover { border-color: var(--accent); }
 .source b { color: var(--accent); font-weight: 600; }
 .source span { display: block; color: var(--muted); margin-top: 3px; }
+.source .live-badge {
+  display: inline-block;
+  margin: 5px 0 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.thinking { color: var(--muted); font-size: 13px; margin-top: 8px; }
 
 .typing { display: inline-flex; gap: 4px; }
 .typing i {

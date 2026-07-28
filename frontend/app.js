@@ -1,4 +1,4 @@
-const state = { agent: "umumiy", sessionId: null, busy: false };
+const state = { agent: "umumiy", sessionId: null, busy: false, agentic: false };
 
 const $ = (id) => document.getElementById(id);
 const messages = $("messages");
@@ -68,14 +68,21 @@ function addBotMessage() {
   return { wrap, bubble, typing };
 }
 
+// a source found live on lex.uz names a document but no article, so the article suffix
+// has to stay optional
+function sourceLabel(source) {
+  const title = source.doc_title || "Hujjat";
+  return source.article_no ? `${title}, ${source.article_no}-modda` : title;
+}
+
 function renderSources(wrap, sources) {
   if (!sources || !sources.length) return;
   const box = el("div", "sources");
   box.appendChild(el("div", "sources-title", "Manbalar"));
   sources.forEach((source) => {
     const button = el("button", "source");
-    const title = el("b", null, `${source.doc_title || ""}, ${source.article_no}-modda`);
-    button.appendChild(title);
+    button.appendChild(el("b", null, sourceLabel(source)));
+    if (source.live) button.appendChild(el("span", "live-badge", "real vaqtda tekshirildi"));
     if (source.article_title) button.appendChild(el("span", null, source.article_title));
     button.addEventListener("click", () => openSource(source));
     box.appendChild(button);
@@ -98,53 +105,13 @@ async function ask(question) {
   setBusy(true);
   addUserMessage(question);
   const { wrap, bubble, typing } = addBotMessage();
-  let answer = "";
 
   try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question,
-        agent: state.agent,
-        session_id: state.sessionId,
-        stream: true,
-      }),
-    });
-    if (!response.ok) throw new Error("Server xatosi: " + response.status);
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split("\n\n");
-      buffer = parts.pop();
-
-      for (const part of parts) {
-        const eventMatch = part.match(/^event: (.+)$/m);
-        const dataMatch = part.match(/^data: (.+)$/m);
-        if (!eventMatch || !dataMatch) continue;
-        const payload = JSON.parse(dataMatch[1]);
-
-        if (eventMatch[1] === "meta") {
-          state.sessionId = payload.session_id;
-        } else if (eventMatch[1] === "token") {
-          if (typing.isConnected) typing.remove();
-          answer += payload.text;
-          bubble.textContent = answer;
-          scrollDown();
-        } else if (eventMatch[1] === "sources") {
-          renderSources(wrap, payload.sources);
-        } else if (eventMatch[1] === "error") {
-          throw new Error(payload.message);
-        }
-      }
+    if (state.agentic) {
+      await askAgentic(question, wrap, bubble, typing);
+    } else {
+      await askStreaming(question, wrap, bubble, typing);
     }
-    if (!answer) bubble.textContent = "Javob olinmadi.";
   } catch (error) {
     if (typing.isConnected) typing.remove();
     bubble.classList.add("error");
@@ -152,6 +119,79 @@ async function ask(question) {
   } finally {
     setBusy(false);
   }
+}
+
+// tool calls interleave with generation, so this path has nothing to stream and the
+// wait needs a visible explanation instead
+async function askAgentic(question, wrap, bubble, typing) {
+  const note = el("div", "thinking", "O'ylanmoqda: baza qidirilmoqda, kerak bo'lsa lex.uz tekshiriladi...");
+  bubble.appendChild(note);
+
+  const response = await fetch("/api/chat/agentic", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question,
+      agent: state.agent,
+      session_id: state.sessionId,
+      stream: false,
+    }),
+  });
+  if (!response.ok) throw new Error("Server xatosi: " + response.status);
+
+  const data = await response.json();
+  if (typing.isConnected) typing.remove();
+  state.sessionId = data.session_id;
+  bubble.textContent = data.answer || "Javob olinmadi.";
+  renderSources(wrap, data.sources);
+}
+
+async function askStreaming(question, wrap, bubble, typing) {
+  let answer = "";
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question,
+      agent: state.agent,
+      session_id: state.sessionId,
+      stream: true,
+    }),
+  });
+  if (!response.ok) throw new Error("Server xatosi: " + response.status);
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop();
+
+    for (const part of parts) {
+      const eventMatch = part.match(/^event: (.+)$/m);
+      const dataMatch = part.match(/^data: (.+)$/m);
+      if (!eventMatch || !dataMatch) continue;
+      const payload = JSON.parse(dataMatch[1]);
+
+      if (eventMatch[1] === "meta") {
+        state.sessionId = payload.session_id;
+      } else if (eventMatch[1] === "token") {
+        if (typing.isConnected) typing.remove();
+        answer += payload.text;
+        bubble.textContent = answer;
+        scrollDown();
+      } else if (eventMatch[1] === "sources") {
+        renderSources(wrap, payload.sources);
+      } else if (eventMatch[1] === "error") {
+        throw new Error(payload.message);
+      }
+    }
+  }
+  if (!answer) bubble.textContent = "Javob olinmadi.";
 }
 
 composer.addEventListener("submit", (event) => {
@@ -237,18 +277,24 @@ function showModal(title, url, build) {
 }
 
 function openSource(source) {
-  showModal(
-    `${source.doc_title}, ${source.article_no}-modda`,
-    source.source_url,
-    (body) => {
-      if (source.article_title) {
-        const heading = el("p", null, source.article_title);
-        heading.style.fontWeight = "600";
-        body.appendChild(heading);
-      }
-      body.appendChild(el("p", null, source.snippet || ""));
+  showModal(sourceLabel(source), source.source_url, (body) => {
+    if (source.article_title) {
+      const heading = el("p", null, source.article_title);
+      heading.style.fontWeight = "600";
+      body.appendChild(heading);
     }
-  );
+    // a live hit carries no text of its own: the base does not hold the document yet
+    body.appendChild(
+      el(
+        "p",
+        null,
+        source.snippet ||
+          (source.live
+            ? "Bu hujjat lex.uz da real vaqtda topildi, uning matni bazada yo'q. To'liq matnni havola orqali oching."
+            : "")
+      )
+    );
+  });
 }
 
 async function openDocument(docId) {
@@ -297,6 +343,10 @@ async function loadFreshness() {
     // the badge is informational; a failure here must not disturb the chat
   }
 }
+
+$("agentic").addEventListener("change", (event) => {
+  state.agentic = event.target.checked;
+});
 
 loadAgents();
 loadFreshness();
