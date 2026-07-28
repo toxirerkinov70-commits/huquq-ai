@@ -18,6 +18,10 @@ CLAUSE_BOUNDARY = re.compile(r"(?<=,)\s+")
 
 PREAMBLE_KEY = "preamble"
 
+# a block with this many cell separators is a table rather than prose
+TABLE_PIPES = 8
+EMBED_BODY_CHARS = 600
+
 
 def estimate_tokens(text: str) -> int:
     return int(len(text) / CHARS_PER_TOKEN)
@@ -79,6 +83,19 @@ def _split_blocks(blocks: list[str], max_tokens: int = MAX_TOKENS) -> list[list[
     return parts or [[]]
 
 
+def _embedding_body(text: str) -> str:
+    """Tables are mostly digits and drown the heading they belong to.
+
+    Several articles in the tax code are titled just "Soliq stavkalari"; what tells them
+    apart is the chapter above them. With the whole rate table averaged into the vector
+    that signal is lost, so only the opening of a table is embedded. The stored text is
+    untouched — the answer still quotes the full table.
+    """
+    if text.count("|") < TABLE_PIPES:
+        return text
+    return text[:EMBED_BODY_CHARS]
+
+
 def _build_embedding_text(
     doc_title: str, article: Article, text: str, previous: Article | None
 ) -> str:
@@ -91,7 +108,7 @@ def _build_embedding_text(
     # article's heading is added as context without touching the stored text
     if previous is not None and len(text) < SHORT_ARTICLE_CHARS and previous.heading:
         header.append(f"Oldingi modda: {previous.heading}")
-    return "\n".join(header) + "\n" + text
+    return "\n".join(header) + "\n" + _embedding_body(text)
 
 
 def _preamble_article(document: Document) -> Article:
