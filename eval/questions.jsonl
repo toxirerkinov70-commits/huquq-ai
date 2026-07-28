@@ -48,3 +48,23 @@
 {"id": 48, "kind": "doc_name", "question": "BuK da Oʻzbekiston Respublikasining davlat kafolati nima?", "doc_id": "-2304138", "article_no": "155"}
 {"id": 49, "kind": "doc_name", "question": "IPK boʻyicha dalillarni tekshirish qachon tiklanadi?", "doc_id": "-3523891", "article_no": "174"}
 {"id": 50, "kind": "doc_name", "question": "MJK da epidemiyalarga qarshi kurash qoidalarini buzganlik uchun qanday jazo belgilangan?", "doc_id": "-97664", "article_no": "54"}
+{"id": 51, "kind": "semantic", "question": "Kim to'lovga qobiliyatsizlik to'g'risida ish qo'zg'atish uchun sudga murojaat qilishi mumkin?", "doc_id": "-5957612", "article_no": "7"}
+{"id": 52, "kind": "semantic", "question": "To'lovga qobiliyatsizlik to'g'risidagi ish sudda qancha muddatda ko'rib chiqiladi?", "doc_id": "-5957612", "article_no": "50"}
+{"id": 53, "kind": "semantic", "question": "Kreditorning to'lovga qobiliyatsizlik to'g'risidagi arizasi qanday shaklda beriladi?", "doc_id": "-5957612", "article_no": "41"}
+{"id": 54, "kind": "semantic", "question": "Notarial harakatlar qayerda amalga oshiriladi?", "doc_id": "-54458", "article_no": "30"}
+{"id": 55, "kind": "semantic", "question": "Notarius fotosuratdagi shaxs ayni o'sha fuqaro ekanligini tasdiqlay oladimi?", "doc_id": "-54458", "article_no": "71", "tag": "short_article"}
+{"id": 56, "kind": "semantic", "question": "Oliy sud Plenumi qancha vaqtda bir marta chaqiriladi?", "doc_id": "-5534923", "article_no": "21"}
+{"id": 57, "kind": "semantic", "question": "Davlat xaridlarida auksion qanday shaklda o'tkaziladi?", "doc_id": "-5382974", "article_no": "53"}
+{"id": 58, "kind": "semantic", "question": "Ish beruvchi bankrot deb topilganda xodimlarning ish haqi qanday to'lanadi?", "doc_id": "-5055690", "article_no": "50"}
+{"id": 59, "kind": "semantic", "question": "Vaqtincha turgan chet el fuqarosini ro'yxatdan o'tkazish uchun qanday hujjatlar topshiriladi?", "doc_id": "-7623461", "article_no": "19"}
+{"id": 60, "kind": "article_no", "question": "Notariat to'g'risidagi qonunning 17-moddasi nima haqida?", "doc_id": "-54458", "article_no": "17"}
+{"id": 61, "kind": "article_no", "question": "To'lovga qobiliyatsizlik to'g'risidagi qonunning 48-moddasi nimani belgilaydi?", "doc_id": "-5957612", "article_no": "48"}
+{"id": 62, "kind": "doc_name", "question": "Davlat xaridlari to'g'risidagi qonunda davlat buyurtmachilari deb kimlar tushuniladi?", "doc_id": "-5382974", "article_no": "19"}
+{"id": 63, "kind": "doc_name", "question": "Sudlar to'g'risidagi qonunda sudyaning huquqlari qanday belgilangan?", "doc_id": "-5534923", "article_no": "61"}
+{"id": 64, "kind": "court", "question": "Fuqaroni muomalaga layoqatsiz deb topishda sudlar qanday holatlarga e'tibor berishi kerak?", "doc_id": "-8345381", "article_no": null}
+{"id": 65, "kind": "court", "question": "Yer to'g'risidagi qonunchilikni buzish bilan bog'liq jinoyat ishlarida sud amaliyoti qanday?", "doc_id": "-7290944", "article_no": null}
+{"id": 66, "kind": "court", "question": "Iqtisodiy sudlar to'lovga qobiliyatsizlik to'g'risidagi qonunni qo'llashda nimaga amal qiladi?", "doc_id": "-7613661", "article_no": null}
+{"id": 67, "kind": "semantic", "question": "Ijtimoiy soliq stavkasi necha foiz etib belgilangan?", "doc_id": "-4674902", "article_no": "405", "tag": "table"}
+{"id": 68, "kind": "semantic", "question": "Jismoniy shaxslardan olinadigan mol-mulk solig'i stavkasi qancha?", "doc_id": "-4674902", "article_no": "422", "tag": "table"}
+{"id": 69, "kind": "semantic", "question": "Yuridik shaxslar uchun yer solig'ining bazaviy stavkalari qanday o'lchamda belgilanadi?", "doc_id": "-4674902", "article_no": "429", "tag": "table"}
+{"id": 70, "kind": "semantic", "question": "Suv obyektlarining suvni muhofaza qilish zonalari qanday belgilanadi?", "doc_id": "-7655343", "article_no": "126", "tag": "table"}

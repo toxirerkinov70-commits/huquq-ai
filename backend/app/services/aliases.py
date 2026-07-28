@@ -52,6 +52,12 @@ ALIASES: dict[str, str] = {
     "konstitutsiya": "konstitutsiya",
 }
 
+_MARKER = "to'g'risida"
+# "Notariat toʻgʻrisida" -> "notariat". Shorter cores are too common to filter on, and a
+# prefix past 80 characters is never something a person types out.
+CORE_RE = re.compile(rf"^([^“”\"]{{6,80}}?)\s+{re.escape(_MARKER)}")
+BOILERPLATE_RE = re.compile(r"^o'zbekiston respublikasi(ning|da)?\s+")
+
 # short aliases are ambiguous inside normal prose, so they must stand alone; the longer
 # entries are distinctive phrases and are matched as plain substrings instead
 SHORT_ALIAS_RE = {
@@ -85,6 +91,32 @@ def documents_for_alias(alias: str) -> list[str]:
     ]
 
 
+@lru_cache(maxsize=1)
+def _title_cores() -> list[tuple[str, list[str]]]:
+    """The naming part of every law title, paired with the documents that carry it.
+
+    The alias table is written by hand and only ever covered the codes. With several
+    hundred laws indexed, an article number alone is ambiguous — article 17 exists in
+    dozens of them — so the document a question names has to come from the registry.
+
+    A core maps to every document whose title contains it, not just the law it was cut
+    from: a plenum ruling on a law names that law in its own title, and a question about
+    how the courts apply a law must be able to reach both.
+    """
+    titles = [(normalize(record.get("title", "")), record["doc_id"]) for record in _registry()]
+    cores: dict[str, None] = {}
+    for title, _ in titles:
+        match = CORE_RE.search(title)
+        if match is None:
+            continue
+        core = BOILERPLATE_RE.sub("", match.group(1).strip(" ,.«»\"'"))
+        if len(core) >= 6:
+            cores.setdefault(core, None)
+    return [
+        (core, [doc_id for title, doc_id in titles if core in title]) for core in cores
+    ]
+
+
 def detect_documents(query: str) -> list[str]:
     """Return doc_ids the query names, either in full or by abbreviation."""
     text = normalize(query)
@@ -95,4 +127,11 @@ def detect_documents(query: str) -> list[str]:
         if found:
             for doc_id in documents_for_alias(alias):
                 matched.setdefault(doc_id, None)
+    # the marker has to be in the query too, otherwise a core like "sudlar" would fire
+    # on any sentence that happens to mention courts
+    if _MARKER in text:
+        for core, doc_ids in _title_cores():
+            if core in text:
+                for doc_id in doc_ids:
+                    matched.setdefault(doc_id, None)
     return list(matched)
