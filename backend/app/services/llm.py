@@ -79,14 +79,8 @@ class LLMClient:
         self.prompt_tokens += usage.get("promptTokenCount", 0)
         self.output_tokens += usage.get("candidatesTokenCount", 0)
 
-    async def generate(
-        self,
-        prompt: str,
-        system: str | None = None,
-        temperature: float = 0.2,
-        json_output: bool = False,
-    ) -> str:
-        payload = self._payload(prompt, system, temperature, json_output)
+    async def _send(self, payload: dict) -> dict:
+        """One request, with the retry and model-swap policy applied."""
         last_error = ""
         for attempt in range(self.max_retries):
             try:
@@ -101,7 +95,7 @@ class LLMClient:
             if response.status_code == 200:
                 data = response.json()
                 self._record_usage(data)
-                return _first_text(data)
+                return data
 
             last_error = response.text[:300]
             if response.status_code == 429:
@@ -119,6 +113,57 @@ class LLMClient:
             raise LLMError(f"generate failed {response.status_code}: {last_error}")
 
         raise LLMError(f"generate failed after {self.max_retries} attempts: {last_error}")
+
+    async def generate(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.2,
+        json_output: bool = False,
+    ) -> str:
+        return _first_text(await self._send(self._payload(prompt, system, temperature, json_output)))
+
+    async def generate_with_tools(
+        self,
+        prompt: str,
+        declarations: list[dict],
+        executor,
+        system: str | None = None,
+        temperature: float = 0.2,
+        max_calls: int = 5,
+    ) -> str:
+        """Let the model call tools, feed the results back, and return its final answer.
+
+        The call budget is a hard stop rather than a suggestion: a model that keeps
+        reaching for the live site would hammer lex.uz and leave the user waiting.
+        """
+        contents: list[dict] = [{"role": "user", "parts": [{"text": prompt}]}]
+        payload: dict = {
+            "contents": contents,
+            "generationConfig": {"temperature": temperature},
+            "tools": [{"functionDeclarations": declarations}],
+        }
+        if system:
+            payload["systemInstruction"] = {"parts": [{"text": system}]}
+
+        for _ in range(max_calls + 1):
+            data = await self._send(payload)
+            calls = _function_calls(data)
+            if not calls:
+                return _first_text(data)
+
+            contents.append(_model_content(data))
+            responses = []
+            for call in calls:
+                result = await executor(call["name"], call.get("args") or {})
+                responses.append(
+                    {"functionResponse": {"name": call["name"], "response": result}}
+                )
+            contents.append({"role": "user", "parts": responses})
+
+        logger.warning("tool call budget of %s exhausted, answering without more calls", max_calls)
+        payload.pop("tools", None)
+        return _first_text(await self._send(payload))
 
     async def stream(
         self, prompt: str, system: str | None = None, temperature: float = 0.2
@@ -168,6 +213,25 @@ class LLMClient:
     ) -> object:
         raw = await self.generate(prompt, system, temperature, json_output=True)
         return parse_json(raw)
+
+
+def _function_calls(data: dict) -> list[dict]:
+    calls = []
+    for candidate in data.get("candidates") or []:
+        for part in (candidate.get("content") or {}).get("parts") or []:
+            call = part.get("functionCall")
+            if call:
+                calls.append(call)
+    return calls
+
+
+def _model_content(data: dict) -> dict:
+    """The model's turn has to go back verbatim, or the tool results have nothing to attach to."""
+    for candidate in data.get("candidates") or []:
+        content = candidate.get("content")
+        if content:
+            return {"role": "model", "parts": content.get("parts") or []}
+    return {"role": "model", "parts": []}
 
 
 def _first_text(data: dict) -> str:

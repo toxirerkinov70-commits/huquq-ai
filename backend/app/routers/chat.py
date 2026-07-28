@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from ..config import settings
 from ..db import sqlite
 from ..models import ChatRequest, ChatResponse
+from ..services import agentic
 from ..services import agents as agents_service
 from ..services import aliases
 from ..services import generate as generate_service
@@ -54,6 +55,40 @@ async def _prepare(request: Request, payload: ChatRequest) -> tuple:
     else:
         hits = hits[:RERANK_TOP_N]
     return agent, session_id, history, hits
+
+
+@router.post("/chat/agentic", response_model=ChatResponse)
+async def chat_agentic(request: Request, payload: ChatRequest):
+    """The model drives the search itself and may reach lex.uz when the base falls short.
+
+    Tool calls interleave with generation, so there is nothing to stream until the model
+    stops calling; this path always answers in one piece.
+    """
+    started = time.monotonic()
+    agent = agents_service.get_agent(payload.agent)
+    session_id = sqlite.ensure_session(payload.session_id, agent.key)
+    history = sqlite.get_history(session_id)
+    sqlite.add_message(session_id, "user", payload.question)
+
+    answer, sources, calls = await agentic.answer_with_tools(
+        payload.question,
+        request.app.state.retriever,
+        request.app.state.llm,
+        history,
+        agent.prompt,
+    )
+    if not generate_service.answer_is_grounded(answer):
+        sources = []
+    sqlite.add_message(session_id, "assistant", answer, sources)
+    logger.info(
+        "agentic agent=%s tools=%s latency=%.2fs",
+        agent.key,
+        [call["tool"] for call in calls],
+        time.monotonic() - started,
+    )
+    return ChatResponse(
+        answer=answer, sources=sources, used_agent=agent.key, session_id=session_id
+    )
 
 
 @router.post("/chat", response_model=ChatResponse)
