@@ -48,7 +48,9 @@ PAYLOAD_INDEXES = {
 }
 
 
-def load_chunks(group: int | None, doc_id: str | None) -> list[dict]:
+def load_chunks(
+    group: int | None, doc_id: str | None, chunk_ids: set[str] | None = None
+) -> list[dict]:
     if not CHUNKS_PATH.exists():
         return []
     chunks = []
@@ -61,8 +63,17 @@ def load_chunks(group: int | None, doc_id: str | None) -> list[dict]:
                 continue
             if doc_id is not None and chunk.get("doc_id") != doc_id:
                 continue
+            if chunk_ids is not None and chunk.get("chunk_id") not in chunk_ids:
+                continue
             chunks.append(chunk)
     return chunks
+
+
+def read_chunk_ids(path: Path | None) -> set[str] | None:
+    """The update pipeline names the handful of chunks an amendment touched."""
+    if path is None:
+        return None
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
 
 
 def point_id(chunk_id: str) -> str:
@@ -206,7 +217,7 @@ async def index_chunks(
 
 
 async def main_async(args: argparse.Namespace) -> int:
-    chunks = load_chunks(args.group, args.doc_id)
+    chunks = load_chunks(args.group, args.doc_id, read_chunk_ids(args.chunk_ids))
     if not chunks:
         logger.error("no chunks match this selection, run run_extract.py first")
         return 1
@@ -251,6 +262,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Index chunks into Qdrant")
     parser.add_argument("--group", type=int, default=None)
     parser.add_argument("--doc-id", default=None)
+    parser.add_argument(
+        "--chunk-ids",
+        type=Path,
+        default=None,
+        help="file of chunk ids to index, one per line; used by the update pipeline",
+    )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH, choices=range(1, 101))
     parser.add_argument("--recreate", action="store_true", help="drop the collection first")

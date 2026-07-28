@@ -11,9 +11,10 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from . import scheduler as scheduler_service
 from .config import settings
 from .db import sqlite
-from .routers import chat, search
+from .routers import chat, search, updates
 from .services.llm import LLMClient
 from .services.retrieval import Retriever
 
@@ -31,10 +32,13 @@ async def lifespan(app: FastAPI):
     sqlite.init_db()
     app.state.retriever = Retriever()
     app.state.llm = LLMClient()
+    app.state.scheduler = scheduler_service.start()
     logger.info("started with collection %s", settings.qdrant_collection)
     try:
         yield
     finally:
+        if app.state.scheduler is not None:
+            app.state.scheduler.shutdown(wait=False)
         await app.state.retriever.close()
         await app.state.llm.close()
 
@@ -51,6 +55,7 @@ app.add_middleware(
 
 app.include_router(chat.router)
 app.include_router(search.router)
+app.include_router(updates.router)
 
 
 @app.exception_handler(Exception)

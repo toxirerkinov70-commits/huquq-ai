@@ -2,8 +2,6 @@
 .venv
 data
 eval
-parser
-scripts
 __pycache__
 *.pyc
 .env

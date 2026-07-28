@@ -283,4 +283,20 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") $("modal").hidden = true;
 });
 
+async function loadFreshness() {
+  try {
+    const response = await fetch("/api/updates?limit=1");
+    const data = await response.json();
+    if (!data.latest) return;
+    const report = data.reports[0];
+    const parts = [`So'nggi yangilanish: ${data.latest}`];
+    if (report.changed) parts.push(`${report.changed} hujjat o'zgardi`);
+    if (report.new) parts.push(`${report.new} yangi hujjat`);
+    $("freshness").textContent = parts.join(" · ");
+  } catch (error) {
+    // the badge is informational; a failure here must not disturb the chat
+  }
+}
+
 loadAgents();
+loadFreshness();

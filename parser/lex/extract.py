@@ -381,6 +381,8 @@ def to_markdown(document: Document, meta: dict) -> str:
         "articles": len(document.articles),
         "content_hash": document.content_hash(),
         "extractor_version": EXTRACTOR_VERSION,
+        # bumped by the update pipeline each time lex.uz publishes a new text
+        "version": meta.get("version", 1),
         "fetched_at": meta.get("fetched_at", ""),
     }
 

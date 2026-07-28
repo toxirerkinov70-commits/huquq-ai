@@ -178,6 +178,12 @@ def chunk_document(document: Document, meta: dict) -> list[dict]:
                     "adopted_date": adopted_date,
                     "effective_date": meta.get("effective_date") or document.effective_date,
                     "status": meta.get("status") or "Y",
+                    # a repealed article is marked, never deleted, so "what did this say
+                    # before?" stays answerable; retrieval filters on status by default
+                    "version": meta.get("version", 1),
+                    "valid_from": meta.get("effective_date") or adopted_date,
+                    "valid_to": meta.get("valid_to"),
+                    "superseded_by": None,
                     "source_url": source_url,
                     "script": document.script,
                     "text": text,

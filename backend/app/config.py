@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     sqlite_path: str = "./data/app.db"
     lex_base_url: str = "https://lex.uz"
     lex_request_delay: float = 1.5
+    # the corpus goes stale on its own, so the refresh runs unattended; turn this off
+    # only when the backend is started somewhere that must not reach lex.uz
+    enable_scheduler: bool = True
     log_level: str = "INFO"
 
 
