@@ -1,6 +1,6 @@
 # Loyiha holati
 
-**Sana:** 2026-07-28 · **Oxirgi commit:** `a12cc73`
+**Sana:** 2026-07-29 · **Oxirgi commit:** `4f9b46d`
 
 ---
 
@@ -19,9 +19,21 @@ seansdagi ochiq muammolarning kattasi yopildi.
 | recall@10 | **1.00** |
 | Bosqichlar | 12 dan 12 tasi yozilgan |
 
-Bu seansda: agentik rejim live qidiruvga o'tadigan bo'ldi, Plenum qarorlari
-topildi (4 tadan 185 taga), qidiruv sifati 0.94 → 0.96 ga ko'tarildi,
-frontend'ga agentik tugma qo'shildi. Qolgan ishlar `VAZIFALAR.md` da.
+Bu seansda (2026-07-29): tizim wakil.ai bilan solishtirilib uchta kamchilik yopildi.
+1. **Suhbatdosh javob** — "qanday yordam bera olasan?", salomlashish kabi
+   meta-savollar endi "topilmadi" o'rniga imkoniyatlar haqida javob oladi
+   (`generate.py` dagi `META_RE` detektori retrieval'ni chetlab o'tadi).
+2. **Tahlil rejimi** — foydalanuvchi vaziyati yoki sud qarori bo'yicha maslahat
+   so'ralganda javob Xulosa / Huquqiy asos / Tavsiya tuzilishida keladi.
+3. **Fayl yuklash** — PDF/rasm Gemini'ga inline boradi, DOCX/TXT matni lokal
+   ajratiladi (`attachments.py`); bir LLM o'tishi hujjatdan xulosa va qidiruv
+   so'rovlarini chiqaradi, shu so'rovlar bilan baza qidirilib javob beriladi.
+4. **UI** — wakil.ai uslubidagi sidebar (logo, Yangi suhbat, Agentlar), vaqtga
+   qarab salomlashuv ekrani, fayl biriktirish, markdown render, mobil menyu.
+
+Oldingi seansda: agentik rejim live qidiruvga o'tadigan bo'ldi, Plenum qarorlari
+topildi (4 tadan 185 taga), qidiruv sifati 0.94 → 0.96 ga ko'tarildi.
+Qolgan ishlar `VAZIFALAR.md` da.
 
 ---
 
