@@ -45,6 +45,16 @@ GROUPS: dict[int, GroupSpec] = {
     6: GroupSpec(6, "Sud amaliyoti", None, path="/uz/search/court", params={"minor": ""}),
     7: GroupSpec(7, "Idoraviy hujjatlar", 5),
     8: GroupSpec(8, "Xalqaro hujjatlar", 6),
+    # The court tab is built around individual cases and yielded only four Plenum
+    # rulings. The Plenum is an organ, not a document type, so the body filter on the
+    # general search is what actually reaches its rulings and practice reviews.
+    9: GroupSpec(
+        9,
+        "Oliy sud Plenumi qarorlari",
+        None,
+        path="/uz/search/all",
+        params={"fbody_id": "2328"},
+    ),
 }
 
 
@@ -91,7 +101,9 @@ def _parse_row(row, spec: GroupSpec) -> dict | None:
     if link is None:
         return None
     href = link.attributes.get("href") or ""
-    doc_id = href.rsplit("/", 1)[-1]
+    # a search with a text query links to /uz/docs/-8336553?query=...#sr-1, and the
+    # trailing part would otherwise be stored as the document id
+    doc_id = href.split("?", 1)[0].split("#", 1)[0].rstrip("/").rsplit("/", 1)[-1]
     if not doc_id:
         return None
 

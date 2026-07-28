@@ -24,7 +24,7 @@ CACHE_DIR = ROOT / "data" / "cache"
 FAILED_PATH = ROOT / "data" / "failed.jsonl"
 
 # codes and court practice carry the most answer value per document, so they go first
-GROUP_PRIORITY = [1, 2, 6, 3, 4, 5, 7, 8]
+GROUP_PRIORITY = [1, 2, 9, 6, 3, 4, 5, 7, 8]
 
 
 def load_registry(path: Path) -> list[dict]:
