@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 from selectolax.parser import HTMLParser
 
 from ..config import settings
+from . import coverage
 from .retrieval import SearchFilters
 
 logger = logging.getLogger(__name__)
@@ -145,14 +146,23 @@ def _lex_client():
         return _live_client
 
 
-def _queue(doc_id: str, reason: str) -> None:
-    """A question that finds stale data feeds the next refresh instead of being lost."""
+def _doc_id_from_href(href: str) -> str:
+    """The search page links carry the query and an anchor: /uz/docs/-8336553?query=bond#sr-1."""
+    path = href.split("?", 1)[0].split("#", 1)[0]
+    return path.rstrip("/").rsplit("/", 1)[-1]
+
+
+def _queue(doc_id: str, reason: str, title: str | None = None) -> None:
+    """A question that finds stale or missing data feeds the next refresh instead of being lost."""
     QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if any(entry.get("doc_id") == doc_id for entry in _queued()):
+        return
     with QUEUE_PATH.open("a", encoding="utf-8") as handle:
         handle.write(
             json.dumps(
                 {
                     "doc_id": doc_id,
+                    "title": title,
                     "reason": reason,
                     "queued_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 },
@@ -160,6 +170,14 @@ def _queue(doc_id: str, reason: str) -> None:
             )
             + "\n"
         )
+
+
+def _queued() -> list[dict]:
+    """A popular question must not write the same document into the queue on every ask."""
+    if not QUEUE_PATH.exists():
+        return []
+    with QUEUE_PATH.open(encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
 
 
 class ToolBox:
@@ -171,6 +189,8 @@ class ToolBox:
         # what each call returned, so the answer can cite exactly what the model saw
         self.results: list[tuple[dict, dict]] = []
         self.live_sources: list[dict] = []
+        # set when a search found the corpus has no word for what was asked
+        self.weak_coverage = False
 
     async def run(self, name: str, args: dict) -> dict:
         call = {"tool": name, "args": args}
@@ -192,7 +212,7 @@ class ToolBox:
     async def _search_legal_base(self, query: str, doc_type: str | None = None) -> dict:
         filters = SearchFilters(doc_type=doc_type) if doc_type else SearchFilters()
         hits = await self.retriever.hybrid_search(query, k=6, filters=filters)
-        return {
+        result = {
             "results": [
                 {
                     "doc_id": hit.payload.get("doc_id"),
@@ -206,6 +226,15 @@ class ToolBox:
                 for hit in hits
             ]
         }
+        # ranking cannot say whether these are the right articles or merely the closest
+        # ones; the vocabulary check can, and the model reads it here beside the results
+        verdict = coverage.assess(query)
+        if verdict is not None:
+            self.weak_coverage = True
+            result.update(verdict)
+        else:
+            result["coverage"] = "good"
+        return result
 
     async def _get_article(self, doc_id: str, article_no: str) -> dict:
         parts = [
@@ -307,6 +336,10 @@ class ToolBox:
             self.live_sources.append(
                 {"doc_title": row["title"], "source_url": row["url"], "live": True}
             )
+            # the question just proved the corpus is missing this document; queueing it
+            # here is how user traffic feeds the refresh instead of the gap persisting
+            if not row["in_base"] and row["doc_id"]:
+                _queue(row["doc_id"], f"search_lex_live: bazada yo'q ({query})", row["title"])
         return {"checked_live": True, "results": rows}
 
     def _fetch_live_search(self, query: str) -> list[dict]:
@@ -322,12 +355,13 @@ class ToolBox:
             if link is None:
                 continue
             href = link.attributes.get("href") or ""
+            doc_id = _doc_id_from_href(href)
             rows.append(
                 {
-                    "doc_id": href.rsplit("/", 1)[-1],
+                    "doc_id": doc_id,
                     "title": link.text(strip=True),
                     "url": f"{settings.lex_base_url}{href}",
-                    "in_base": href.rsplit("/", 1)[-1] in _registry(),
+                    "in_base": doc_id in _registry(),
                 }
             )
         return rows

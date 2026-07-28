@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 TOOL_RULES = f"""Vositalardan foydalanish qoidalari:
 - Har doim `search_legal_base` dan boshla.
 - `get_article` ni matn kesilgan yoki qo'shni modda kerak bo'lgandagina chaqir.
-- Natijalar savolda aytilgan aniq tushuncha haqida emas, balki unga **o'xshash boshqa**
-  tushuncha haqida bo'lsa, buni "topilmadi" deb hisobla va `search_lex_live` ni chaqir.
-  Yaqin mavzudagi moddani so'ralganining javobi o'rniga qo'yish xato.
+- `search_legal_base` javobida `coverage: "weak"` bo'lsa, bu bazada shunday tushuncha
+  yo'qligini bildiradi: `missing_terms` dagi so'zlar korpusda umuman uchramaydi.
+  Natijalar qanchalik ishonchli ko'rinmasin, ular boshqa tushuncha haqida — javob
+  o'rniga qo'yma. Bunday holatda `search_lex_live` ni chaqirish **majburiy**.
 - `check_lex_live` va `search_lex_live` sekin va lex.uz ga yuk beradi. Ularni yuqoridagi
   holatdan tashqari faqat ma'lumot eskirgan bo'lishi mumkin bo'lganda chaqir.
 - Jami {MAX_TOOL_CALLS} tadan ortiq vosita chaqirmang.
@@ -82,6 +83,10 @@ def _sources(toolbox: ToolBox) -> list[dict]:
 
 def _cited(call: dict, result: dict) -> list[dict]:
     if call["tool"] == "search_legal_base":
+        # the model was told not to answer from these, so listing them under the answer
+        # would present the neighbouring concept as the source after all
+        if result.get("coverage") == "weak":
+            return []
         return [
             {
                 "doc_id": row.get("doc_id"),
