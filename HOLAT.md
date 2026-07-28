@@ -1,13 +1,13 @@
 # Loyiha holati
 
-**Sana:** 2026-07-28 · **Oxirgi commit:** `2fab574`
+**Sana:** 2026-07-28 · **Oxirgi commit:** `28daeac`
 
 ---
 
 ## 1. Bir qarashda
 
-Tizim ishlayapti va foydalanishga tayyor. Korpus yig'ish tugadi: Konstitutsiya,
-20 kodeks, 562 qonun va sud amaliyotining tanlangan qismi indexlangan.
+Tizim ishlayapti va foydalanishga tayyor. Barcha 12 bosqich yozilgan: korpus
+yig'ildi, avtomatik yangilanish va tool calling qo'shildi.
 
 | Ko'rsatkich | Qiymat |
 |---|---|
@@ -15,10 +15,13 @@ Tizim ishlayapti va foydalanishga tayyor. Korpus yig'ish tugadi: Konstitutsiya,
 | Yuklangan va chunklangan | 1 147 (100%) |
 | Indexlangan chunk | **20 497** |
 | Noyob modda | 19 333 |
-| Qidiruv sifati (recall@5, gibrid) | **0.98** (50 savol) |
-| Bosqichlar | 12 dan 10 tasi tugagan |
-| Kod | 18 commit |
+| Qidiruv sifati (recall@5, gibrid) | **0.94** (70 savol) |
+| Bosqichlar | 12 dan 12 tasi yozilgan |
+| Kod | 21 commit |
 | Disk | 0.73 GB |
+
+Ochiq muammolar `VAZIFALAR.md` da — eng muhimi agentik rejim yaqin mavzudagi
+normani javob o'rniga qo'yishi.
 
 ---
 
@@ -73,17 +76,21 @@ graph LR
 
 ## 4. Qidiruv sifati
 
-`eval/questions.jsonl` da 50 savol, barchasi 21 kodeksning haqiqiy
-moddasiga bog'langan va qo'lda tekshirilgan.
+`eval/questions.jsonl` da 70 savol: kodekslar, qonunlar va sud amaliyoti,
+barchasi haqiqiy moddaga bog'langan va indexga solishtirib tekshirilgan.
 
 | Rejim | recall@5 | recall@10 | MRR |
 |---|---:|---:|---:|
-| **hybrid** | **0.98** | **0.98** | **0.859** |
+| **hybrid** | **0.94** | **0.99** | **0.810** |
 | dense | 0.56 | 0.70 | 0.523 |
 | sparse | 0.62 | 0.72 | 0.509 |
 
-Savol turlari bo'yicha (gibrid): modda raqami 1.00, kodeks nomi 1.00,
-semantik 0.96.
+Savol turlari bo'yicha (gibrid): modda raqami **1.00**, hujjat nomi **1.00**,
+sud amaliyoti **1.00**, semantik 0.90.
+
+Avvalgi 50 savollik to'plam 0.98 ko'rsatardi, lekin u faqat kodekslarni
+sinardi. Qonun va sud savollari qo'shilgach haqiqiy raqam 0.90 bo'lib chiqdi;
+ikkita sistematik xato tuzatilgach 0.94 ga ko'tarildi.
 
 ### Korpus kattalashishining narxi
 
@@ -133,14 +140,25 @@ nvidia kutubxonalarini tortadi, ~4.5 GB bo'lardi), embedding modeli esa
 
 ---
 
-## 6. Qolgan ishlar
+## 6. Avtomatik yangilanish va tool calling
 
-**Bosqich 11 — avtomatik yangilanish.** lex.uz `pub_date=today` sahifasini
-kuzatish, `content_hash` bo'yicha o'zgarishni aniqlash, faqat o'zgargan
-moddalarni qayta embedding qilish, APScheduler, xavfsizlik chegaralari.
+**Bosqich 11 — ishlaydi va sinovdan o'tgan.** `watch.py` rasmiy e'lonlar
+tasmasini o'qiydi va qamrovga tegishlilarini ajratadi (oylik oynada 52 hujjatdan
+8 tasi). `diff.py` ikki Markdown versiyani modda sarlavhalari bo'yicha
+solishtiradi. Sinov: bitta modda qo'lda o'zgartirilganda hujjatning 9 chunkidan
+faqat bittasi (`-25531:7:0`) qayta indexlandi.
 
-**Bosqich 12 — tool calling.** LLM ga qidiruv, modda olish, hujjat ro'yxati
-vositalarini berish.
+Xavfsizlik chegaralari: bir kunda 50 dan ortiq hujjat o'zgarsa ish to'xtaydi,
+matni yarmidan ko'p qisqargan hujjat o'tkazib yuboriladi va navbatga qo'yiladi.
+Kuchini yo'qotgan matn o'chirilmaydi — `status: R` va `valid_to` qo'yiladi.
+
+Rejalashtiruvchi: kunlik 06:00, yakshanba 03:00, oylik — Toshkent vaqti bilan,
+har safar snapshot olingandan keyin.
+
+**Bosqich 12 — yozilgan, bitta holatda noto'g'ri ishlaydi.** Beshta vosita
+`/api/chat/agentic` ortida. Offline vositalar to'g'ri ishlaydi, live vositalar
+lex.uz bilan sinaldi. Lekin model bazada aniq javob bo'lmaganda live qidiruvga
+o'tmaydi — batafsil `VAZIFALAR.md`, 1-vazifa.
 
 ---
 

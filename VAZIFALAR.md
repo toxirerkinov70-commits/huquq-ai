@@ -3,6 +3,8 @@
 Bu fayl loyihani davom ettiradigan yangi Claude Code seansi uchun yozilgan.
 Avval `HOLAT.md` ni o'qing — u tizimning hozirgi holatini tushuntiradi.
 
+**Sana:** 2026-07-28 · **Oxirgi commit:** `28daeac` · **12 bosqichdan 12 tasi yozilgan**
+
 ---
 
 ## 0. Boshlashdan oldin bilishingiz shart
@@ -12,182 +14,147 @@ bo'ladi yoki loyiha to'xtaydi.
 
 | # | Qoida | Nega |
 |---|---|---|
-| 1 | **lex.uz ga so'rovlar orasida 20 soniya kuting** | `robots.txt` da `Crawl-delay: 20`. Client buni avtomatik bajaradi — `LEX_REQUEST_DELAY` ni pasaytirish yordam bermaydi. Tezlashtirsangiz IP bloklanadi va loyiha to'xtaydi. |
-| 2 | **Embedding lokal modelda, uni Gemini'ga qaytarmang** | Gemini bepul tarifi kuniga 1 000 embedding so'rovi — bu korpus uchun 7 kun. `EMBED_PROVIDER=local` bo'lib turishi kerak. |
-| 3 | **Embedding modelini o'zgartirsangiz, butun kolleksiyani qayta quring** | Vektorlar boshqa fazoda bo'ladi, eski va yangisini aralashtirib bo'lmaydi: `scripts/index.py --recreate`. |
-| 4 | **LLM kuniga 20 so'rov beradi (har model uchun alohida)** | Tizim modellar zanjiri bo'ylab o'zi almashadi (`gemini_llm_fallbacks`). Ko'p sinov qilsangiz kvota tugaydi — ertaga tiklanadi. |
-| 5 | **lex.uz sahifalashi POST orqali** | Oddiy `?page=2` ishlamaydi: ASP.NET WebForms, `__VIEWSTATE` bilan POST qilinadi. `parser/lex/discover.py` da hal qilingan. |
-| 6 | **`data/raw/*.html` hech qachon o'zgartirilmaydi** | U asl manba. Parser xatosi topilsa, `run_extract.py` ni qayta ishga tushiring — qayta yuklash shart emas. |
-| 7 | **Har bosqichdan keyin commit qiling** | CLAUDE.md talabi. |
+| 1 | **lex.uz ga so'rovlar orasida 20 soniya kuting** | `robots.txt` da `Crawl-delay: 20`. Client buni avtomatik bajaradi. Tezlashtirsangiz IP bloklanadi. |
+| 2 | **`HF_HUB_OFFLINE=1` qo'ying** | `sentence-transformers` har ishga tushganda Hugging Face Hub'ga versiya so'rovi yuboradi. Ketma-ket ko'p jarayon ishlatilsa Hub ulanishni yopadi va model lokal keshda bo'lsa ham yuklanmaydi. |
+| 3 | **Embedding lokal modelda** | `EMBED_PROVIDER=local`. Gemini bepul tarifi kuniga 1 000 embedding — bu korpus uchun 20 kun. |
+| 4 | **Embedding modelini o'zgartirsangiz butun kolleksiyani qayta quring** | `scripts/index.py --recreate`. Vektorlar boshqa fazoda bo'ladi. |
+| 5 | **LLM kuniga 20 so'rov beradi (har model uchun alohida)** | Zanjirda 6 model ≈ 120 so'rov/kun. Eval'ni `ENABLE_QUERY_EXPANSION=false` bilan ishlating — u LLM'ga umuman tegmaydi. |
+| 6 | **`data/raw/*.html` hech qachon o'zgartirilmaydi** | Asl manba. Parser xatosi topilsa `run_extract.py` ni qayta ishga tushiring, qayta yuklash shart emas. |
+| 7 | **Indexatsiyadan oldin `bash scripts/backup.sh`** | Buzilgan yangilanishdan snapshot orqali qaytish mumkin. |
+| 8 | **Host'da `index.py` ishlatishdan oldin backend konteynerini to'xtating** | Ikkalasi ham embedding modelini xotiraga yuklaydi, 8 GB da sig'maydi. |
+| 9 | **Modern Standby** | Mashina uxlaganda fon jarayonlari o'ladi. Barcha skriptlar uzilishdan tiklanadi, lekin uzun ishlarni kuzatib turing. |
+| 10 | **Har bosqichdan keyin commit** | CLAUDE.md talabi. |
 
 ---
 
 ## 1. Vazifalar jadvali
 
-Ustuvorlik bo'yicha tartiblangan. "Vaqt" — mashina ishlaydigan vaqt, sizniki emas.
-
-| # | Vazifa | Bosqich | Vaqt | Holat |
-|---|---|---|---|---|
-| 1 | Qonunlar matnini yuklash va indexlash | 9 | ~3.5 soat | bajarilmoqda |
-| 2 | Sud amaliyotini qo'shish | 9 | ~3.5 soat | navbatda |
-| 3 | Baholashni 50 savolga kengaytirish | 10 | dasturlash | tugadi |
-| 4 | Docker deploy va backup | 10 | dasturlash | tugadi |
-| 5 | Avtomatik yangilanish | 11 | dasturlash | 4 dan keyin |
-| 6 | Tool calling | 12 | dasturlash | — |
-
-Baza 1, 2, 3 va 6-guruh bilan cheklandi. Prezident hujjatlari, hukumat
-qarorlari, idoraviy va xalqaro hujjatlar (jami ~10 800 hujjat, ~64 soat
-yuklash) **rejadan chiqarildi** — pastdagi izohga qarang.
+| # | Vazifa | Muhimligi | Vaqt |
+|---|---|---|---|
+| 1 | Agentik rejim live vositaga o'tmasligi | **yuqori** | dasturlash |
+| 2 | Jadvalli moddalar (soliq stavkalari) | o'rtacha | dasturlash |
+| 3 | Plenum qarorlarini to'liq topish | o'rtacha | ~1 soat |
+| 4 | Frontend'da agentik rejim tugmasi | past | dasturlash |
+| 5 | 545 sud qarorini indexlash (qaror kutilmoqda) | past | ~30 daqiqa |
 
 ---
 
-## Vazifa 1 — Qonunlarni qo'shish (562 hujjat)
+## Vazifa 1 — Agentik rejim yaqin mavzuni javob o'rniga qo'yadi
 
-Reyestr **allaqachon yig'ilgan** (`data/registry.jsonl` da 562 ta `group: 3`
-yozuvi bor), shuning uchun `run_discover.py` ni qayta ishlatish shart emas.
+**Eng muhim ochiq muammo.** 12-bosqich yozildi va ishlaydi, lekin bitta
+holatda noto'g'ri xatti-harakat qiladi.
+
+Takrorlash:
 
 ```bash
-python parser/run_fetch.py --group 3      # ~3.1 soat, fonda ishlatilsin
-python parser/run_extract.py --group 3    # ~2 daqiqa
-python scripts/index.py --group 3         # ~30 daqiqa (lokal embedding)
-python eval/run.py                        # recall pasaymaganini tekshiring
+python -c "..."   # yoki:
+curl -X POST http://localhost:8000/api/chat/agentic \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Bond omborlari faoliyatini tashkil etish tartibi qanday belgilangan?","stream":false}'
 ```
 
-**Tekshiruv:** `data/failed.jsonl` bo'sh yoki juda kichik; Qdrant nuqtalari
-soni `chunks.jsonl` qatorlari soniga teng; `eval/run.py` da recall@5 pasaymagan.
+Kutilgan: "bond ombori" hukumat qarori bilan tartibga solinadi, u qamrovda yo'q →
+model `search_lex_live` ni chaqirishi va hujjat nomini havolasi bilan
+ko'rsatishi kerak.
 
-**Diqqat:** yuklash uzoq davom etadi va uzilishi mumkin. Skript uzilishdan
-davom etadi — qayta ishga tushirsangiz yuklangan fayllarni o'tkazib yuboradi.
-Tarmoq xatolari normal, backoff ularni yutadi.
+Aslida: model bazadagi **"bojxona ombori"** (Bojxona kodeksi 176-modda) haqida
+javob beradi va live vositani umuman chaqirmaydi.
 
-**Kutilayotgan muammo:** qonunlar orasida kirill yozuvidagilari bo'lishi
-mumkin. `parser/lex/extract.py` da `detect_script()` va `transliterate()`
-funksiyalari yozilgan, lekin haqiqiy ma'lumotda **hali sinalmagan**. Kirill
-hujjat uchrasa, chunk sifatini qo'lda tekshiring.
+Sinalgan va **yordam bermagan** yechim: `agentic.py` dagi `TOOL_RULES` ga
+"yaqin mavzudagi natijani topilmadi deb hisobla" qoidasini qo'shish. Model
+baribir o'zgarmadi.
+
+Keyingi urinish uchun g'oyalar:
+- Qoidani prompt'da emas, **kodda** majburlash: `search_legal_base` natijalarining
+  eng yuqori skorini tekshirib, u chegaradan past bo'lsa tool javobiga
+  "ichki bazada ishonchli natija yo'q, `search_lex_live` ni chaqiring" degan
+  maslahatni qo'shish
+- `search_legal_base` javobiga skorlarni ham qaytarish, model o'zi baholay olsin
+- Savoldagi atamani (`bond ombori`) natijalar sarlavhalari bilan solishtirish
 
 ---
 
-## Vazifa 2 — Sud amaliyotini qo'shish (565 hujjat)
+## Vazifa 2 — Jadvalli moddalar
 
-CLAUDE.md bu javob sifatini keskin oshirishini yozgan.
+70 savollik eval'da 4 ta xato qolgan, 3 tasi bir sinfdan: sarlavhasi umumiy
+("Soliq stavkalari") va matni katta jadval bo'lgan moddalar.
+
+| Savol | Modda |
+|---|---|
+| 33 | Soliq kodeksi 337 — banklar foyda solig'i |
+| 67 | Soliq kodeksi 405 — ijtimoiy soliq |
+| 69 | Soliq kodeksi 429 — yer solig'i |
+
+Aniqlangan sabab: ma'lumot yo'qolmagan — `text_for_embedding` da bo'lim va bob
+nomi bor ("XIV BO'LIM. IJTIMOIY SOLIQ"). Muammo reyting darajasida: yuzlab
+raqamdan iborat jadval o'rtacha vektorni o'ziga tortadi.
+
+Qilingan: `parser/lex/chunk.py` da `_embedding_body()` jadval matnini embedding
+uchun 600 belgigacha qisqartiradi (saqlangan `text` to'liq qoladi).
+Natija: recall@5 0.93 → 0.94, recall@10 0.96 → 0.99. Yordam berdi, hal qilmadi.
+
+To'liq yechim chunking'ni o'zgartirishni talab qiladi: katta jadvalni bitta
+chunk va bitta vektorda saqlash noto'g'ri, uni qatorlar guruhiga bo'lish kerak.
+Bu `chunk.py` ni qayta yozish va butun korpusni qayta indexlash demak (~1.5 soat).
+
+---
+
+## Vazifa 3 — Plenum qarorlari
+
+`/uz/search/court` tabidan 564 hujjat olindi, lekin ulardan atigi **4 tasi**
+Oliy sud Plenumi qarori. Aslida ular ancha ko'p. Boshqa filtr yoki `act_type`
+ostida bo'lishi mumkin — tekshirilmagan.
+
+Tekshirish uchun: `/uz/search/all` da `query=plenum` yoki turli `act_type`
+qiymatlari bilan sinab ko'ring. Har so'rov orasida 20 soniya.
+
+Topilsa: reyestrga `group=6` bilan qo'shing, `run_fetch --group 6`,
+`run_extract --group 6`, keyin faqat o'sha hujjatlarni indexlang.
+
+---
+
+## Vazifa 4 — Frontend'da agentik rejim
+
+`/api/chat/agentic` endpoint ishlaydi, lekin frontend'da unga tugma yo'q.
+Faqat `/api/chat` (streaming) ishlatiladi.
+
+Diqqat: agentik yo'l streaming qilmaydi — vosita chaqiruvlari generatsiya bilan
+aralashadi, shuning uchun javob bir bo'lak bo'lib keladi. Frontend'da
+"o'ylanmoqda" holatini ko'rsatish kerak.
+
+---
+
+## Vazifa 5 — 545 sud qarori
+
+Sud amaliyoti 564 hujjatdan 19 tasi indexlangan (4 Plenum + 15 sharh).
+Qolgan 545 tasi alohida ish qarorlari — sarlavhasi shunchaki ish raqami
+("4-1203-2301/1131-sonli iqtisodiy ish"). Ular umumiy norma o'rnatmaydi.
+
+Chunklari diskda tayyor, qayta yuklash shart emas:
 
 ```bash
-python parser/run_discover.py --group 6   # ~10 daqiqa
-python parser/run_fetch.py --group 6      # ~3.1 soat
-python parser/run_extract.py --group 6
-python scripts/index.py --group 6
+for d in $(cat data/g6_ids_qolgan.txt); do python scripts/index.py --doc-id="$d"; done
 ```
 
-**Diqqat:** 6-guruh boshqa URL ishlatadi (`/uz/search/court`), chunki sud
-hujjatlari alohida bo'limda. Bu `parser/lex/discover.py` dagi `GROUPS` da
-sozlangan, lekin **hali sinalmagan** — birinchi sahifa to'g'ri parse
-bo'lganini tekshiring.
-
-Sud qarorlarining tuzilishi kodekslardan farq qiladi (moddalar o'rniga
-bandlar bo'lishi mumkin). Agar `run_extract.py` "no articles found"
-ogohlantirishini bersa, `parser/lex/extract.py` ni moslashtirish kerak.
-
----
-
-## Vazifa 3 — Baholashni kengaytirish
-
-Hozir `eval/questions.jsonl` da 15 savol bor va recall@5 = 1.00. Bu juda
-kichik namuna — 50 tagacha kengaytiring.
-
-- Har bir savol uchun `doc_id` va `article_no` ni **haqiqiy ma'lumotdan**
-  tekshiring (`data/markdown/*.md` ni o'qing), taxmin qilmang.
-- Turlar nisbati saqlansin: taxminan yarmi semantik, qolgani modda raqami
-  va kodeks nomi bo'yicha.
-- Yangi guruhlar qo'shilgach, ulardan ham savollar kiriting.
-- Qiyin holatlarni qo'shing: yuqori indeksli moddalar (`173²`), jadvalli
-  moddalar (soliq stavkalari), juda qisqa moddalar.
-
-Keyin `eval/run.py` natijasiga qarab tuning qiling: chunk hajmi
-(`parser/lex/chunk.py` da `MAX_TOKENS`), RRF `RRF_K`, `top-k`, rerank prompti.
-
----
-
-## Vazifa 4 — Docker deploy va backup
-
-1. `backend/Dockerfile` yozing. E'tibor bering: lokal embedding modeli
-   (~1.1 GB) image ichiga kirishi yoki volume orqali ulanishi kerak, aks
-   holda har ishga tushirishda qayta yuklab olinadi.
-2. `docker-compose.yml` ga backend servisini qo'shing.
-3. `scripts/backup.sh` — Qdrant snapshot (`POST /collections/{name}/snapshots`)
-   va SQLite dump.
-4. `README.md` ni toza muhitda tekshiring.
-
-**Diqqat:** mashinada 8 GB RAM va Qdrant 2 GB oladi. Backend konteynerida
-lokal model yana ~1.5 GB oladi. Sig'ishini tekshiring.
-
----
-
-## Rejadan chiqarilgan guruhlar
-
-| Guruh | Hujjat | Yuklash |
-|---|---:|---:|
-| 4. Prezident hujjatlari | 3 526 | ~19.6 soat |
-| 5. Hukumat qarorlari | 4 588 | ~25.5 soat |
-| 7. Idoraviy hujjatlar | 1 216 | ~6.8 soat |
-| 8. Xalqaro hujjatlar | 1 510 | ~8.4 soat |
-
-Sabab hajm emas, hujjat turi. Bu guruhlarning katta qismi bir martalik,
-vaziyatga oid hujjatlar ("falon lavozimga tayinlansin", "falon mablag'
-ajratilsin") — ular yangi huquqiy norma qo'shmaydi, lekin qidiruvda
-kodekslar va qonunlar bilan raqobatlashadigan nomzod sifatida chiqadi.
-
-Nimadan voz kechildi: 5-guruhdagi nizom va tartiblar amaliy tartib-taomil
-savollari uchun qimmatli edi. Ular bo'lmagani uchun "qanday hujjat
-topshiriladi, qancha to'lov" turidagi savollarga tizim javob bermaydi va
-"bazada aniq norma topilmadi" deydi.
-
-Agar keyinchalik qaytarilsa: parser sakkizala guruhni qo'llab-quvvatlaydi,
-`--group N` bilan ishlaydi. Har guruhdan keyin `eval/run.py` ni ishga
-tushirib, recall pasaymaganini tekshiring.
-
----
-
-## Vazifa 5 — Avtomatik yangilanish (11-bosqich)
-
-CLAUDE.md da batafsil yozilgan. Asosiy nuqtalar:
-
-- `parser/lex/watch.py` — `/uz/search/official?lang=4&pub_date=today` sahifasi
-- `parser/lex/diff.py` — ikki Markdown versiyani `difflib` bilan solishtirish,
-  `###` sarlavhalari bo'yicha qaysi modda o'zgarganini aniqlash
-- Faqat o'zgargan moddalarni qayta embedding qilish
-- Kuchini yo'qotgan hujjatlar **o'chirilmaydi**, `status: "R"` qo'yiladi
-- `backend/app/scheduler.py` — APScheduler
-- Xavfsizlik chegaralari: bir kunda 50 dan ortiq hujjat o'zgarsa yoki matn
-  50% dan ko'p qisqarsa — to'xtash va tasdiq so'rash
-
-`content_hash` allaqachon har bir Markdown faylning frontmatter'ida bor —
-o'zgarishni aniqlash shu orqali ishlaydi.
-
----
-
-## Vazifa 6 — Tool calling (12-bosqich)
-
-LLM ga vositalar berish: qidiruv, modda olish, hujjat ro'yxati. CLAUDE.md
-ning oxirgi bo'limiga qarang.
+**Qaror egasi — loyiha egasi.** Qo'shilsa qidiruv shovqini oshadi, qo'shilmasa
+sud amaliyoti tor qoladi.
 
 ---
 
 ## 2. Foydali buyruqlar
 
 ```bash
-# ishga tushirish
-.\start.ps1
+docker compose up -d                     # qdrant + backend
+bash scripts/backup.sh                   # snapshot
 
-# holat
-curl http://localhost:8000/health
-curl http://localhost:6333/collections/uz_legal
+ENABLE_QUERY_EXPANSION=false HF_HUB_OFFLINE=1 python eval/run.py
+python eval/run.py --mode dense          # gibrid qancha foyda berayotganini ko'rish
 
-# sifat
-python eval/run.py --verbose
-python eval/run.py --mode dense     # gibrid qanchalik foyda berayotganini ko'rish
+python parser/run_update.py --window today --dry-run
+python parser/run_update.py --doc-id=-25531
+python scripts/index.py --chunk-ids data/update_chunks.txt
 
-# qayta qurish (embedding modeli o'zgarsa)
-python scripts/index.py --recreate
+curl http://localhost:8000/api/updates
 ```
 
 ---
@@ -199,11 +166,14 @@ python scripts/index.py --recreate
 | `parser/lex/client.py` | HTTP client: robots.txt, kesh, backoff |
 | `parser/lex/discover.py` | Qidiruv sahifalari, ASP.NET pagination |
 | `parser/lex/extract.py` | HTML → Markdown, modda ajratish, sup raqamlar |
-| `parser/lex/chunk.py` | Modda → chunk, uzunlarini bo'lish |
-| `backend/app/services/embedding.py` | Lokal va Gemini embedding |
-| `backend/app/services/sparse.py` | BM25 + n-gramma kodlash |
+| `parser/lex/chunk.py` | Modda → chunk, preamble fallback, jadval qisqartirish |
+| `parser/lex/watch.py` | Rasmiy e'lonlar tasmasi, qamrov bo'yicha tasniflash |
+| `parser/lex/diff.py` | Ikki Markdown versiyani solishtirish |
+| `parser/run_update.py` | Yangilanish orkestratori, xavfsizlik chegaralari |
+| `backend/app/scheduler.py` | APScheduler: kunlik 06:00, haftalik, oylik |
+| `backend/app/services/aliases.py` | Hujjat nomi detektori (reyestrdan) |
 | `backend/app/services/retrieval.py` | Dense, sparse, RRF, modda detektori |
-| `backend/app/services/llm.py` | Gemini wrapper, model almashish |
-| `backend/app/services/rerank.py` | LLM rerank |
-| `backend/app/services/generate.py` | System prompt va javob |
-| `scripts/index.py` | Qdrant indexatsiyasi |
+| `backend/app/services/generate.py` | System prompt, qisman javob qoidasi |
+| `backend/app/services/tools.py` | 5 ta vosita, live lex.uz |
+| `backend/app/services/agentic.py` | Function calling bilan javob |
+| `scripts/index.py` | Qdrant indexatsiyasi, `--chunk-ids` bilan tanlab |
