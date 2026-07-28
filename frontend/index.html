@@ -3,57 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Huquqiy yordamchi — O'zbekiston qonunchiligi</title>
+<title>Huquq AI — O'zbekiston qonunchiligi bo'yicha yordamchi</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">§</span>
-    <span>Huquqiy yordamchi</span>
-  </div>
-  <nav class="tabs">
-    <button class="tab active" data-view="chat">Suhbat</button>
-    <button class="tab" data-view="docs">Hujjatlar</button>
-  </nav>
-</header>
+<div class="layout">
+  <button class="menu-btn" id="menu-btn" aria-label="Menyu">
+    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
 
-<main>
-  <section id="view-chat" class="view active">
-    <div class="agents" id="agents"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">§</span>
+      <span class="brand-name">Huquq AI</span>
+    </div>
 
-    <label class="mode" title="Model qidiruvni o'zi boshqaradi. Bazada javob topilmasa lex.uz dan real vaqtda qidiradi — sekinroq ishlaydi va javob bir bo'lak bo'lib keladi.">
-      <input type="checkbox" id="agentic">
-      <span>Agentik rejim</span>
-    </label>
+    <button class="new-chat" id="new-chat">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Yangi suhbat
+    </button>
 
-    <div class="messages" id="messages">
-      <div class="empty" id="empty">
-        <h1>O'zbekiston qonunchiligi bo'yicha savol bering</h1>
-        <p>Javob har doim qonun moddasiga tayanadi va manba havolasi bilan beriladi.</p>
-        <div class="samples">
-          <button class="sample">Nikoh qaysi yoshdan tuzilishi mumkin?</button>
-          <button class="sample">Fuqarolik kodeksining 173-moddasi nima haqida?</button>
-          <button class="sample">Ish haqi qanday muddatlarda to'lanadi?</button>
-        </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="chat">
+        <svg viewBox="0 0 24 24" width="17" height="17"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Suhbat
+      </button>
+      <button class="nav-item" data-view="docs">
+        <svg viewBox="0 0 24 24" width="17" height="17"><path d="M6 3h9l4 4v14H6z M14 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Hujjatlar
+      </button>
+    </nav>
+
+    <div class="side-section">
+      <div class="side-title">Agentlar</div>
+      <div class="agent-list" id="agents"></div>
+    </div>
+
+    <div class="side-bottom">
+      <label class="mode" title="Model qidiruvni o'zi boshqaradi. Bazada javob topilmasa lex.uz dan real vaqtda qidiradi — sekinroq ishlaydi va javob bir bo'lak bo'lib keladi.">
+        <input type="checkbox" id="agentic">
+        <span class="mode-track"><span class="mode-thumb"></span></span>
+        <span>Agentik rejim</span>
+      </label>
+      <p class="freshness" id="freshness" title="Baza lex.uz dan oxirgi marta qachon yangilangani"></p>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop" hidden></div>
+
+  <main class="content">
+    <section id="view-chat" class="view active">
+      <div class="chat-scroll" id="chat-scroll">
+        <div class="messages" id="messages"></div>
       </div>
-    </div>
 
-    <form class="composer" id="composer">
-      <textarea id="question" rows="1" placeholder="Savolingizni yozing..." autocomplete="off"></textarea>
-      <button type="submit" id="send" title="Yuborish">→</button>
-    </form>
-    <p class="disclaimer">Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.</p>
-    <p class="freshness" id="freshness" title="Baza lex.uz dan oxirgi marta qachon yangilangani"></p>
-  </section>
+      <div class="composer-wrap">
+        <div class="attach-chip" id="attach-chip" hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M21 12.5l-8.5 8.5a6 6 0 0 1-8.5-8.5L12.5 4a4 4 0 0 1 5.7 5.7L9.7 18.2a2 2 0 0 1-2.9-2.9l7.8-7.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span id="attach-name"></span>
+          <button type="button" id="attach-remove" aria-label="Faylni olib tashlash">×</button>
+        </div>
+        <form class="composer" id="composer">
+          <button type="button" class="icon-btn" id="attach" title="Fayl biriktirish (PDF, rasm, DOCX, TXT)">
+            <svg viewBox="0 0 24 24" width="19" height="19"><path d="M21 12.5l-8.5 8.5a6 6 0 0 1-8.5-8.5L12.5 4a4 4 0 0 1 5.7 5.7L9.7 18.2a2 2 0 0 1-2.9-2.9l7.8-7.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+          <textarea id="question" rows="1" placeholder="Savolingizni yozing..." autocomplete="off"></textarea>
+          <button type="submit" class="send-btn" id="send" title="Yuborish">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 19V5m0 0l-6 6m6-6l6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </form>
+        <input type="file" id="file-input" hidden
+               accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt,.md,application/pdf,image/png,image/jpeg,image/webp">
+        <p class="disclaimer">Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.</p>
+      </div>
+    </section>
 
-  <section id="view-docs" class="view">
-    <div class="docs-search">
-      <input id="doc-query" type="search" placeholder="Hujjat nomi bo'yicha qidirish...">
-    </div>
-    <div class="doc-list" id="doc-list"></div>
-  </section>
-</main>
+    <section id="view-docs" class="view">
+      <div class="docs-inner">
+        <h2 class="docs-heading">Hujjatlar bazasi</h2>
+        <div class="docs-search">
+          <input id="doc-query" type="search" placeholder="Hujjat nomi bo'yicha qidirish...">
+        </div>
+        <div class="doc-list" id="doc-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
 
 <div class="modal" id="modal" hidden>
   <div class="modal-card">

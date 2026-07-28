@@ -1,10 +1,14 @@
-const state = { agent: "umumiy", sessionId: null, busy: false, agentic: false };
+const state = { agent: "umumiy", sessionId: null, busy: false, agentic: false, attachment: null };
+
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const $ = (id) => document.getElementById(id);
 const messages = $("messages");
+const chatScroll = $("chat-scroll");
 const composer = $("composer");
 const questionInput = $("question");
 const sendButton = $("send");
+const sidebar = $("sidebar");
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -13,18 +17,132 @@ function el(tag, className, text) {
   return node;
 }
 
-/* ---------- tabs ---------- */
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+/* ---------- minimal markdown (input is escaped first, so innerHTML stays safe) ---------- */
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+function inlineMd(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function renderMarkdown(text) {
+  const lines = escapeHtml(text).split("\n");
+  let html = "";
+  let list = null;
+  let para = [];
+
+  const flushPara = () => {
+    if (para.length) { html += "<p>" + para.join("<br>") + "</p>"; para = []; }
+  };
+  const closeList = () => {
+    if (list) { html += "</" + list + ">"; list = null; }
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line.trim()) { flushPara(); closeList(); continue; }
+    const heading = line.match(/^#{1,4}\s+(.*)/);
+    const bullet = line.match(/^\s*[-*•]\s+(.*)/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)/);
+    if (heading) { flushPara(); closeList(); html += "<h3>" + inlineMd(heading[1]) + "</h3>"; continue; }
+    if (bullet) {
+      flushPara();
+      if (list !== "ul") { closeList(); html += "<ul>"; list = "ul"; }
+      html += "<li>" + inlineMd(bullet[1]) + "</li>";
+      continue;
+    }
+    if (numbered) {
+      flushPara();
+      if (list !== "ol") { closeList(); html += "<ol>"; list = "ol"; }
+      html += "<li>" + inlineMd(numbered[1]) + "</li>";
+      continue;
+    }
+    closeList();
+    para.push(inlineMd(line));
+  }
+  flushPara();
+  closeList();
+  return html;
+}
+
+/* ---------- welcome screen ---------- */
+
+const SAMPLES = [
+  { cat: "Imkoniyatlar", q: "Sen menga qanday yordam bera olasan?" },
+  { cat: "Oila huquqi", q: "Nikoh qaysi yoshdan tuzilishi mumkin?" },
+  { cat: "Modda bo'yicha", q: "Fuqarolik kodeksining 173-moddasi nima haqida?" },
+  { cat: "Mehnat huquqi", q: "Ish haqi qanday muddatlarda to'lanishi kerak?" },
+];
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return "Xayrli tong";
+  if (hour >= 11 && hour < 18) return "Xayrli kun";
+  return "Xayrli kech";
+}
+
+function showEmptyState() {
+  messages.innerHTML = "";
+  const empty = el("div", "empty");
+  empty.id = "empty";
+  empty.appendChild(el("h1", null, greeting()));
+  empty.appendChild(
+    el("p", "sub", "Umumiy, jinoyat, fuqarolik, soliq, mehnat, shartnoma va sud masalalari bo'yicha savol bering. Hujjat yuklab tahlil qildirishingiz ham mumkin.")
+  );
+  const grid = el("div", "samples");
+  SAMPLES.forEach((sample) => {
+    const card = el("button", "sample");
+    card.appendChild(el("span", "cat", sample.cat));
+    card.appendChild(el("span", "q", sample.q));
+    card.addEventListener("click", () => ask(sample.q));
+    grid.appendChild(card);
+  });
+  empty.appendChild(grid);
+  messages.appendChild(empty);
+}
+
+/* ---------- sidebar ---------- */
+
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  $("backdrop").hidden = true;
+}
+
+$("menu-btn").addEventListener("click", () => {
+  sidebar.classList.add("open");
+  $("backdrop").hidden = false;
+});
+$("backdrop").addEventListener("click", closeSidebar);
+
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
     document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    tab.classList.add("active");
-    $("view-" + tab.dataset.view).classList.add("active");
-    if (tab.dataset.view === "docs") loadDocuments();
+    item.classList.add("active");
+    $("view-" + item.dataset.view).classList.add("active");
+    if (item.dataset.view === "docs") loadDocuments();
+    closeSidebar();
   });
 });
 
-/* ---------- agents ---------- */
+$("new-chat").addEventListener("click", () => {
+  state.sessionId = null;
+  clearAttachment();
+  showEmptyState();
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+  document.querySelector('.nav-item[data-view="chat"]').classList.add("active");
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  $("view-chat").classList.add("active");
+  closeSidebar();
+  questionInput.focus();
+});
+
 async function loadAgents() {
   try {
     const response = await fetch("/api/agents");
@@ -38,6 +156,7 @@ async function loadAgents() {
         state.agent = agent.key;
         document.querySelectorAll(".agent").forEach((a) => a.classList.remove("active"));
         button.classList.add("active");
+        closeSidebar();
       });
       box.appendChild(button);
     });
@@ -46,12 +165,62 @@ async function loadAgents() {
   }
 }
 
+/* ---------- attachments ---------- */
+
+const EXT_MIMES = {
+  pdf: "application/pdf",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain",
+  md: "text/markdown",
+};
+
+function clearAttachment() {
+  state.attachment = null;
+  $("file-input").value = "";
+  $("attach-chip").hidden = true;
+}
+
+$("attach").addEventListener("click", () => $("file-input").click());
+$("attach-remove").addEventListener("click", clearAttachment);
+
+$("file-input").addEventListener("change", () => {
+  const file = $("file-input").files[0];
+  if (!file) return;
+  if (file.size > MAX_FILE_BYTES) {
+    alert("Fayl hajmi 10 MB dan oshmasligi kerak.");
+    clearAttachment();
+    return;
+  }
+  const ext = file.name.split(".").pop().toLowerCase();
+  const mime = file.type || EXT_MIMES[ext] || "";
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.attachment = { name: file.name, mime, data: reader.result.split(",")[1] };
+    $("attach-name").textContent = file.name;
+    $("attach-chip").hidden = false;
+  };
+  reader.readAsDataURL(file);
+});
+
 /* ---------- chat ---------- */
-function addUserMessage(text) {
+
+function addUserMessage(text, fileName) {
   const empty = $("empty");
   if (empty) empty.remove();
   const wrap = el("div", "msg user");
-  wrap.appendChild(el("div", "bubble", text));
+  const bubble = el("div", "bubble");
+  if (fileName) {
+    const tag = el("span", "file-tag", fileName);
+    bubble.appendChild(tag);
+    bubble.appendChild(el("div", null, text));
+  } else {
+    bubble.textContent = text;
+  }
+  wrap.appendChild(bubble);
   messages.appendChild(wrap);
   scrollDown();
 }
@@ -92,7 +261,7 @@ function renderSources(wrap, sources) {
 }
 
 function scrollDown() {
-  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  chatScroll.scrollTo({ top: chatScroll.scrollHeight, behavior: "smooth" });
 }
 
 function setBusy(busy) {
@@ -103,14 +272,16 @@ function setBusy(busy) {
 async function ask(question) {
   if (!question.trim() || state.busy) return;
   setBusy(true);
-  addUserMessage(question);
+  const attachment = state.attachment;
+  clearAttachment();
+  addUserMessage(question, attachment ? attachment.name : null);
   const { wrap, bubble, typing } = addBotMessage();
 
   try {
     if (state.agentic) {
-      await askAgentic(question, wrap, bubble, typing);
+      await askAgentic(question, attachment, wrap, bubble, typing);
     } else {
-      await askStreaming(question, wrap, bubble, typing);
+      await askStreaming(question, attachment, wrap, bubble, typing);
     }
   } catch (error) {
     if (typing.isConnected) typing.remove();
@@ -121,10 +292,21 @@ async function ask(question) {
   }
 }
 
+async function readError(response) {
+  try {
+    const data = await response.json();
+    if (data.detail) return data.detail;
+  } catch (ignored) {}
+  return "Server xatosi: " + response.status;
+}
+
 // tool calls interleave with generation, so this path has nothing to stream and the
 // wait needs a visible explanation instead
-async function askAgentic(question, wrap, bubble, typing) {
-  const note = el("div", "thinking", "O'ylanmoqda: baza qidirilmoqda, kerak bo'lsa lex.uz tekshiriladi...");
+async function askAgentic(question, attachment, wrap, bubble, typing) {
+  const note = el("div", "thinking",
+    attachment
+      ? "Hujjat o'qilmoqda va baza qidirilmoqda..."
+      : "O'ylanmoqda: baza qidirilmoqda, kerak bo'lsa lex.uz tekshiriladi...");
   bubble.appendChild(note);
 
   const response = await fetch("/api/chat/agentic", {
@@ -135,19 +317,23 @@ async function askAgentic(question, wrap, bubble, typing) {
       agent: state.agent,
       session_id: state.sessionId,
       stream: false,
+      attachment,
     }),
   });
-  if (!response.ok) throw new Error("Server xatosi: " + response.status);
+  if (!response.ok) throw new Error(await readError(response));
 
   const data = await response.json();
   if (typing.isConnected) typing.remove();
   state.sessionId = data.session_id;
-  bubble.textContent = data.answer || "Javob olinmadi.";
+  bubble.innerHTML = renderMarkdown(data.answer || "Javob olinmadi.");
   renderSources(wrap, data.sources);
 }
 
-async function askStreaming(question, wrap, bubble, typing) {
+async function askStreaming(question, attachment, wrap, bubble, typing) {
   let answer = "";
+  if (attachment) {
+    bubble.appendChild(el("div", "thinking", "Hujjat o'qilmoqda va baza qidirilmoqda..."));
+  }
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -156,9 +342,10 @@ async function askStreaming(question, wrap, bubble, typing) {
       agent: state.agent,
       session_id: state.sessionId,
       stream: true,
+      attachment,
     }),
   });
-  if (!response.ok) throw new Error("Server xatosi: " + response.status);
+  if (!response.ok) throw new Error(await readError(response));
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -182,7 +369,7 @@ async function askStreaming(question, wrap, bubble, typing) {
       } else if (eventMatch[1] === "token") {
         if (typing.isConnected) typing.remove();
         answer += payload.text;
-        bubble.textContent = answer;
+        bubble.innerHTML = renderMarkdown(answer);
         scrollDown();
       } else if (eventMatch[1] === "sources") {
         renderSources(wrap, payload.sources);
@@ -204,7 +391,7 @@ composer.addEventListener("submit", (event) => {
 
 questionInput.addEventListener("input", () => {
   questionInput.style.height = "auto";
-  questionInput.style.height = Math.min(questionInput.scrollHeight, 160) + "px";
+  questionInput.style.height = Math.min(questionInput.scrollHeight, 180) + "px";
 });
 
 questionInput.addEventListener("keydown", (event) => {
@@ -212,10 +399,6 @@ questionInput.addEventListener("keydown", (event) => {
     event.preventDefault();
     composer.requestSubmit();
   }
-});
-
-document.querySelectorAll(".sample").forEach((button) => {
-  button.addEventListener("click", () => ask(button.textContent));
 });
 
 /* ---------- documents ---------- */
@@ -348,5 +531,6 @@ $("agentic").addEventListener("change", (event) => {
   state.agentic = event.target.checked;
 });
 
+showEmptyState();
 loadAgents();
 loadFreshness();
