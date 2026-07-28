@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import AsyncIterator
 
 from .llm import LLMClient
@@ -10,21 +11,33 @@ DISCLAIMER = (
     "Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling."
 )
 NOT_FOUND = "Bu savol bo'yicha bazada aniq norma topilmadi"
+PARTIAL = "Savolning quyidagi qismi bazada topilmadi"
 MAX_CONTEXT_CHARS = 2500
 SNIPPET_CHARS = 300
+
+# "173-modda", "289¹-modda", "15 modda" — a cited article means the answer rests on
+# the context rather than on nothing
+CITATION_RE = re.compile(r"\d[\d¹²³⁰-⁹\s-]*modda", re.IGNORECASE)
 
 SYSTEM_PROMPT = f"""Sen O'zbekiston Respublikasi qonunchiligi bo'yicha yordam beruvchi yordamchisan.
 
 Qat'iy qoidalar:
 1. Faqat quyida berilgan kontekstga tayan. Kontekstda yo'q narsani yozma.
 2. Modda matnini o'zgartirma, qayta yozma va o'ylab topma. Raqamlarni, muddatlarni va
-   summalarni aynan kontekstdagidek keltir.
+   summalarni aynan kontekstdagidek keltir. Kontekstda summa, miqdor yoki muddat
+   ko'rsatilmagan bo'lsa, uni o'zingdan yozma — ko'rsatilmaganini ayt.
 3. Har bir da'vo yonida manbani ko'rsat: hujjat nomi va modda raqami.
    Masalan: (Fuqarolik kodeksi, 173-modda).
 4. Agar kontekstda javob bo'lmasa, ochiq ayt: "{NOT_FOUND}". Taxmin qilma.
-5. Foydalanuvchi qaysi tilda so'rasa, o'sha tilda javob ber (o'zbek yoki rus).
-6. Javob aniq va qisqa bo'lsin, ortiqcha muqaddima yozma.
-7. Javob oxirida alohida qatorda quyidagini yoz:
+5. Kontekstdagi modda boshqa tartib-taomil yoki boshqa holat haqida bo'lsa, uni
+   so'ralgan savolning javobi sifatida ko'rsatma. Yaqin mavzudagi norma javobning
+   o'rnini bosmaydi.
+6. Savol bir necha qismdan iborat bo'lsa, kontekst javob beradigan qismini yoz,
+   so'ng qolganini alohida qatorda ko'rsat:
+   "{PARTIAL}: ..." — va nima topilmaganini aniq sanab o't.
+7. Foydalanuvchi qaysi tilda so'rasa, o'sha tilda javob ber (o'zbek yoki rus).
+8. Javob aniq va qisqa bo'lsin, ortiqcha muqaddima yozma.
+9. Javob oxirida alohida qatorda quyidagini yoz:
    {DISCLAIMER}"""
 
 CONTEXT_TEMPLATE = """[{index}] {doc_title}, {article}-modda. {title}
@@ -53,7 +66,14 @@ def build_context(hits: list[Hit]) -> str:
 
 
 def answer_is_grounded(answer: str) -> bool:
-    """A 'not found' answer must not be presented with a list of sources."""
+    """A 'not found' answer must not be presented with a list of sources.
+
+    A partial answer says a piece is missing while the rest still rests on real
+    articles, so the phrase alone cannot decide: an answer that cites an article
+    keeps its sources.
+    """
+    if CITATION_RE.search(answer):
+        return True
     return NOT_FOUND.lower() not in answer.lower()
 
 
