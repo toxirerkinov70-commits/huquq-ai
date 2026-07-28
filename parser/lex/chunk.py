@@ -96,9 +96,10 @@ def _embedding_body(text: str) -> str:
     return text[:EMBED_BODY_CHARS]
 
 
-def _build_embedding_text(
+def _build_heading(
     doc_title: str, article: Article, text: str, previous: Article | None
 ) -> str:
+    """Document, section, chapter and article title — what says which article this is."""
     header = [doc_title]
     for level in (article.section, article.chapter):
         if level:
@@ -108,7 +109,13 @@ def _build_embedding_text(
     # article's heading is added as context without touching the stored text
     if previous is not None and len(text) < SHORT_ARTICLE_CHARS and previous.heading:
         header.append(f"Oldingi modda: {previous.heading}")
-    return "\n".join(header) + "\n" + _embedding_body(text)
+    return "\n".join(header)
+
+
+def _build_embedding_text(
+    doc_title: str, article: Article, text: str, previous: Article | None
+) -> str:
+    return _build_heading(doc_title, article, text, previous) + "\n" + _embedding_body(text)
 
 
 def _preamble_article(document: Document) -> Article:
@@ -190,6 +197,9 @@ def chunk_document(document: Document, meta: dict) -> list[dict]:
                     "text_for_embedding": _build_embedding_text(
                         doc_title, article, text, previous
                     ),
+                    # keyword search weights the heading separately, so it is stored
+                    # rather than reconstructed by pulling the embedding text apart
+                    "heading": _build_heading(doc_title, article, text, previous),
                 }
             )
         previous = article

@@ -22,7 +22,7 @@ from backend.app.services.embedding import (  # noqa: E402
     EmbeddingError,
     get_embedding_client,
 )
-from backend.app.services.sparse import encode_document  # noqa: E402
+from backend.app.services.sparse import document_text, encode_document  # noqa: E402
 
 logger = logging.getLogger("index")
 
@@ -137,8 +137,17 @@ def ensure_collection(client: QdrantClient, name: str, dim: int, recreate: bool)
 def upsert(client: QdrantClient, name: str, chunks: list[dict], vectors: list[list[float]]) -> None:
     points = []
     for chunk, vector in zip(chunks, vectors):
-        indices, values = encode_document(chunk["text_for_embedding"])
-        payload = {key: value for key, value in chunk.items() if key != "text_for_embedding"}
+        # the two vectors index different text: dense gets the shortened body so a rate
+        # table cannot drag the average, sparse gets the full text with the heading
+        # weighted so identically titled articles stay apart
+        indices, values = encode_document(
+            document_text(chunk.get("heading", ""), chunk["text"])
+        )
+        payload = {
+            key: value
+            for key, value in chunk.items()
+            if key not in ("text_for_embedding", "heading")
+        }
         points.append(
             models.PointStruct(
                 id=point_id(chunk["chunk_id"]),

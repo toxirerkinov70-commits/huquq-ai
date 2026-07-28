@@ -13,6 +13,9 @@ AVG_DOC_LEN = 180
 NGRAM_SIZE = 4
 NGRAM_WEIGHT = 0.35
 
+# how many times a chunk's heading is repeated before its body when indexing
+HEADING_REPEAT = 3
+
 TOKEN_RE = re.compile(r"[\w'ʻʼ‘’-]+", re.UNICODE)
 # lex.uz mixes apostrophe glyphs, so oʻzbek and o'zbek must collapse to one token
 APOSTROPHES = str.maketrans({"ʻ": "'", "ʼ": "'", "‘": "'", "’": "'", "`": "'"})
@@ -50,6 +53,22 @@ def expand(tokens: list[str]) -> Counter:
                 gram = token[start : start + NGRAM_SIZE]
                 weighted[token_id("#" + gram)] += NGRAM_WEIGHT
     return weighted
+
+
+def document_text(heading: str, body: str) -> str:
+    """What keyword search indexes for a chunk.
+
+    Several tax-code articles are titled exactly "Soliq stavkalari" and only the section
+    above them says which tax it is. That line appears once while the rate table under it
+    runs to hundreds of tokens, so BM25 length normalisation buries the one phrase that
+    identifies the article. Repeating the heading restores its weight.
+
+    The body is the full text, not the shortened form the dense vector gets: a table
+    drags an averaged vector around, but it costs keyword matching nothing.
+    """
+    if not heading:
+        return body
+    return "\n".join([heading] * HEADING_REPEAT + [body])
 
 
 def encode_document(text: str) -> tuple[list[int], list[float]]:

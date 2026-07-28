@@ -119,7 +119,8 @@ def _to_hits(points, source: str) -> list[Hit]:
     ]
 
 
-def reciprocal_rank_fusion(rankings: list[list[Hit]], k: int = RRF_K) -> list[Hit]:
+def reciprocal_rank_fusion(rankings: list[list[Hit]], k: int | None = None) -> list[Hit]:
+    k = RRF_K if k is None else k
     scores: dict[str, float] = {}
     best: dict[str, Hit] = {}
     for ranking in rankings:
