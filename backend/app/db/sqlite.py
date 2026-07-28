@@ -85,3 +85,52 @@ def get_history(session_id: str, limit: int = HISTORY_LIMIT) -> list[dict]:
             (session_id, limit),
         ).fetchall()
     return [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
+
+
+def list_sessions(limit: int = 100) -> list[dict]:
+    """Sessions that hold at least one message, newest activity first."""
+    with connect() as connection:
+        rows = connection.execute(
+            """
+            SELECT s.id, s.agent, s.created_at,
+                   (SELECT content FROM messages
+                    WHERE session_id = s.id AND role = 'user' ORDER BY id LIMIT 1) AS title,
+                   (SELECT created_at FROM messages
+                    WHERE session_id = s.id ORDER BY id DESC LIMIT 1) AS updated_at
+            FROM sessions s
+            WHERE EXISTS (SELECT 1 FROM messages WHERE session_id = s.id)
+            ORDER BY updated_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_session_messages(session_id: str) -> list[dict] | None:
+    with connect() as connection:
+        exists = connection.execute(
+            "SELECT 1 FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        if exists is None:
+            return None
+        rows = connection.execute(
+            "SELECT role, content, sources, created_at FROM messages "
+            "WHERE session_id = ? ORDER BY id",
+            (session_id,),
+        ).fetchall()
+    return [
+        {
+            "role": row["role"],
+            "content": row["content"],
+            "sources": json.loads(row["sources"]) if row["sources"] else [],
+            "created_at": row["created_at"],
+        }
+        for row in rows
+    ]
+
+
+def delete_session(session_id: str) -> None:
+    with connect() as connection:
+        connection.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+        connection.execute("DELETE FROM sessions WHERE id = ?", (session_id,))

@@ -7,7 +7,7 @@ what it finds there feeds the next refresh.
 
 import logging
 
-from .generate import DISCLAIMER, SYSTEM_PROMPT, build_sources
+from .generate import SYSTEM_PROMPT, build_sources
 from .llm import LLMClient
 from .tools import MAX_TOOL_CALLS, TOOL_DECLARATIONS, ToolBox
 
@@ -57,7 +57,7 @@ async def answer_with_tools(
         extra_parts=extra_parts,
     )
     if not answer.strip():
-        answer = f"Bu savol bo'yicha bazada aniq norma topilmadi.\n\n{DISCLAIMER}"
+        answer = "Bu savol bo'yicha bazada aniq norma topilmadi."
 
     for call in toolbox.calls:
         logger.info("tool call %s %s", call["tool"], call["args"])

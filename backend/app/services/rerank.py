@@ -5,7 +5,7 @@ from .retrieval import Hit
 
 logger = logging.getLogger(__name__)
 
-TOP_N = 6
+TOP_N = 4
 MAX_SNIPPET = 900
 
 SYSTEM = """Sen huquqiy qidiruv natijalarini baholaydigan yordamchisan.

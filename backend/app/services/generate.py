@@ -50,8 +50,8 @@ Qat'iy qoidalar:
    "{PARTIAL}: ..." — va nima topilmaganini aniq sanab o't.
 7. Foydalanuvchi qaysi tilda so'rasa, o'sha tilda javob ber (o'zbek yoki rus).
 8. Javob aniq va qisqa bo'lsin, ortiqcha muqaddima yozma.
-9. Javob oxirida alohida qatorda quyidagini yoz:
-   {DISCLAIMER}
+9. "Javoblar tavsiyaviy xarakterga ega" degan ogohlantirishni yozma — uni interfeys
+   har javob ostida o'zi ko'rsatadi.
 
 Istisno holatlar:
 - Savol qonunchilik haqida emas, balki salomlashish, minnatdorchilik yoki sening
@@ -174,7 +174,40 @@ def build_prompt(
 
 
 def empty_answer() -> str:
-    return f"{NOT_FOUND}.\n\n{DISCLAIMER}"
+    return f"{NOT_FOUND}."
+
+
+SUPERSCRIPTS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+CITED_NO_RE = re.compile(r"(\d+[¹²³⁴⁵⁶⁷⁸⁹⁰]*)(?:\s*-\s*|\s+)modda", re.IGNORECASE)
+
+
+def _normalize_no(value: object) -> str:
+    return re.sub(r"[^0-9]", "", str(value).translate(SUPERSCRIPTS))
+
+
+def filter_cited_sources(answer: str, sources: list[dict]) -> list[dict]:
+    """Keep only the sources the answer actually cites.
+
+    The reranker picks candidates before the answer exists, so a passage that lost
+    the argument still sat in the list and was shown as a source. An article number
+    in the answer is the reliable signal; article-less documents (Plenum rulings)
+    are matched by their title words instead.
+    """
+    cited = {_normalize_no(match) for match in CITED_NO_RE.findall(answer)}
+    if not cited:
+        return sources
+    answer_lower = answer.lower()
+    kept = []
+    for source in sources:
+        article_no = source.get("article_no")
+        if article_no:
+            if _normalize_no(article_no) in cited:
+                kept.append(source)
+            continue
+        title_words = set(re.findall(r"\w{6,}", (source.get("doc_title") or "").lower()))
+        if sum(1 for word in title_words if word in answer_lower) >= 2:
+            kept.append(source)
+    return kept or sources
 
 
 def is_conversational(question: str) -> bool:

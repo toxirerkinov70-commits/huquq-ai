@@ -32,6 +32,26 @@ class ChatResponse(BaseModel):
     session_id: str | None = None
 
 
+class SessionSummary(BaseModel):
+    id: str
+    agent: str = "umumiy"
+    title: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class SessionMessage(BaseModel):
+    role: str
+    content: str
+    sources: list[Source] = []
+    created_at: str | None = None
+
+
+class SessionDetail(BaseModel):
+    id: str
+    messages: list[SessionMessage] = []
+
+
 class SearchRequest(BaseModel):
     query: str = Field(min_length=2, max_length=2000)
     agent: str = "umumiy"

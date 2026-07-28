@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 
 from ..config import settings
 from ..db import sqlite
-from ..models import ChatRequest, ChatResponse
+from ..models import ChatRequest, ChatResponse, SessionDetail, SessionSummary
 from ..services import agentic
 from ..services import agents as agents_service
 from ..services import aliases
@@ -26,6 +26,25 @@ CANDIDATE_K = 20
 
 def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@router.get("/sessions", response_model=list[SessionSummary])
+async def sessions():
+    return [SessionSummary(**row) for row in sqlite.list_sessions()]
+
+
+@router.get("/sessions/{session_id}", response_model=SessionDetail)
+async def session_detail(session_id: str):
+    messages = sqlite.get_session_messages(session_id)
+    if messages is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return SessionDetail(id=session_id, messages=messages)
+
+
+@router.delete("/sessions/{session_id}")
+async def remove_session(session_id: str):
+    sqlite.delete_session(session_id)
+    return {"deleted": session_id}
 
 
 def _user_text(payload: ChatRequest) -> str:
@@ -127,6 +146,8 @@ async def chat_agentic(request: Request, payload: ChatRequest):
     )
     if not generate_service.answer_is_grounded(answer):
         sources = []
+    else:
+        sources = generate_service.filter_cited_sources(answer, sources)
     sqlite.add_message(session_id, "assistant", answer, sources)
     logger.info(
         "agentic agent=%s tools=%s latency=%.2fs",
@@ -174,6 +195,8 @@ async def chat(request: Request, payload: ChatRequest):
             )
             if not generate_service.answer_is_grounded(answer):
                 sources = []
+            else:
+                sources = generate_service.filter_cited_sources(answer, sources)
         sqlite.add_message(session_id, "assistant", answer, sources)
         logger.info(
             "chat agent=%s hits=%s latency=%.2fs tokens=%s/%s",
@@ -189,6 +212,7 @@ async def chat(request: Request, payload: ChatRequest):
 
     async def event_stream() -> AsyncIterator[str]:
         collected: list[str] = []
+        final_sources: list[dict] = []
         yield _sse("meta", {"session_id": session_id, "used_agent": agent.key})
         try:
             if conversational:
@@ -205,14 +229,14 @@ async def chat(request: Request, payload: ChatRequest):
             logger.exception("streaming failed")
             yield _sse("error", {"message": str(exc)})
         else:
-            grounded = not conversational and generate_service.answer_is_grounded(
-                "".join(collected)
-            )
-            yield _sse("sources", {"sources": sources if grounded else []})
+            answer_text = "".join(collected)
+            if not conversational and generate_service.answer_is_grounded(answer_text):
+                final_sources = generate_service.filter_cited_sources(answer_text, sources)
+            yield _sse("sources", {"sources": final_sources})
         finally:
             answer = "".join(collected)
             if answer:
-                sqlite.add_message(session_id, "assistant", answer, sources)
+                sqlite.add_message(session_id, "assistant", answer, final_sources)
             logger.info(
                 "chat(stream) agent=%s hits=%s latency=%.2fs tokens=%s/%s",
                 agent.key,

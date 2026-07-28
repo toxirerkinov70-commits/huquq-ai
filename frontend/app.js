@@ -1,6 +1,11 @@
 const state = { agent: "umumiy", sessionId: null, busy: false, agentic: false, attachment: null };
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const THEME_KEY = "huquq_theme";
+const SESSION_KEY = "huquq_session_id";
+const AGENTS_COLLAPSED_KEY = "huquq_agents_collapsed";
+const DISCLAIMER_TEXT =
+  "Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.";
 
 const $ = (id) => document.getElementById(id);
 const messages = $("messages");
@@ -16,6 +21,28 @@ function el(tag, className, text) {
   if (text !== undefined) node.textContent = text;
   return node;
 }
+
+/* ---------- theme ---------- */
+
+function applyTheme() {
+  const pref = localStorage.getItem(THEME_KEY) || "system";
+  const dark =
+    pref === "dark" ||
+    (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.querySelectorAll(".theme-switch button").forEach((button) => {
+    button.classList.toggle("active", button.dataset.themePref === pref);
+  });
+}
+
+document.querySelectorAll(".theme-switch button").forEach((button) => {
+  button.addEventListener("click", () => {
+    localStorage.setItem(THEME_KEY, button.dataset.themePref);
+    applyTheme();
+  });
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+applyTheme();
 
 /* ---------- minimal markdown (input is escaped first, so innerHTML stays safe) ---------- */
 
@@ -71,14 +98,39 @@ function renderMarkdown(text) {
   return html;
 }
 
+// the interface shows its own advisory block, so a model-written copy is dropped
+function stripDisclaimer(text) {
+  return text
+    .replace(/\n*\**\s*Javoblar tavsiyaviy xarakterga ega[^\n]*$/i, "")
+    .trim();
+}
+
+function disclaimerBlock() {
+  const box = el("div", "answer-disclaimer");
+  box.innerHTML =
+    '<svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 8v.5M12 11.5V16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  box.appendChild(el("span", null, DISCLAIMER_TEXT));
+  return box;
+}
+
 /* ---------- welcome screen ---------- */
 
-const SAMPLES = [
-  { cat: "Imkoniyatlar", q: "Sen menga qanday yordam bera olasan?" },
-  { cat: "Oila huquqi", q: "Nikoh qaysi yoshdan tuzilishi mumkin?" },
-  { cat: "Modda bo'yicha", q: "Fuqarolik kodeksining 173-moddasi nima haqida?" },
-  { cat: "Mehnat huquqi", q: "Ish haqi qanday muddatlarda to'lanishi kerak?" },
-];
+const AGENT_MODE_INFO = `Agent rejimi yoqilganda javob topish jarayonini modelning o'zi boshqaradi.
+
+**Oddiy rejim** — har savol bir xil yo'ldan o'tadi: baza qidiruvi, saralash, javob. Tez ishlaydi, javob oqim bilan keladi.
+
+**Agent rejimi** — modelga 5 ta vosita beriladi va u qaysi birini, qachon ishlatishni o'zi hal qiladi:
+- **Ichki qidiruv** — qonun bazasi bo'ylab gibrid qidiruv, asosiy vosita
+- **Modda matni** — kerakli moddaning to'liq matnini oladi
+- **Hujjat mundarijasi** — "bu kodeksda nima bor?" savollari uchun
+- **lex.uz holat tekshiruvi** — hujjatning amaldagi holatini real vaqtda tekshiradi
+- **lex.uz jonli qidiruv** — bazada topilmagan tushunchani lex.uz dan qidiradi
+
+**Asosiy afzalligi:** savolingizdagi tushuncha bazada umuman bo'lmasa, tizim javobni o'ylab topmaydi — lex.uz dan jonli qidiradi va topilgan hujjatni havolasi bilan ko'rsatadi. Bunday manbalar "real vaqtda tekshirildi" belgisi bilan ajratiladi, hujjatning o'zi esa keyingi yangilanishda bazaga qo'shiladi.
+
+**Narxi:** sekinroq ishlaydi va javob oqim bilan emas, bir bo'lak bo'lib keladi.
+
+Rejim chap paneldagi **Agent rejimi** halqasi orqali yoqiladi va o'chiriladi.`;
 
 function greeting() {
   const hour = new Date().getHours();
@@ -96,15 +148,28 @@ function showEmptyState() {
     el("p", "sub", "Umumiy, jinoyat, fuqarolik, soliq, mehnat, shartnoma va sud masalalari bo'yicha savol bering. Hujjat yuklab tahlil qildirishingiz ham mumkin.")
   );
   const grid = el("div", "samples");
-  SAMPLES.forEach((sample) => {
-    const card = el("button", "sample");
-    card.appendChild(el("span", "cat", sample.cat));
-    card.appendChild(el("span", "q", sample.q));
-    card.addEventListener("click", () => ask(sample.q));
-    grid.appendChild(card);
-  });
+
+  const agentCard = el("button", "sample");
+  agentCard.appendChild(el("span", "cat", "Agent rejimi"));
+  agentCard.appendChild(el("span", "q", "Agent rejimi nima va qachon kerak?"));
+  agentCard.addEventListener("click", showAgentInfo);
+  grid.appendChild(agentCard);
+
+  const capabilities = el("button", "sample");
+  capabilities.appendChild(el("span", "cat", "Imkoniyatlar"));
+  capabilities.appendChild(el("span", "q", "Sen menga qanday yordam bera olasan?"));
+  capabilities.addEventListener("click", () => ask("Sen menga qanday yordam bera olasan?"));
+  grid.appendChild(capabilities);
+
   empty.appendChild(grid);
   messages.appendChild(empty);
+}
+
+function showAgentInfo() {
+  showModal("Agent rejimi", null, (body) => {
+    body.classList.add("md");
+    body.innerHTML = renderMarkdown(AGENT_MODE_INFO);
+  });
 }
 
 /* ---------- sidebar ---------- */
@@ -120,28 +185,42 @@ $("menu-btn").addEventListener("click", () => {
 });
 $("backdrop").addEventListener("click", closeSidebar);
 
-document.querySelectorAll(".nav-item").forEach((item) => {
+function activateView(view) {
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  const item = document.querySelector(`.nav-item[data-view="${view}"]`);
+  if (item) item.classList.add("active");
+  $("view-" + view).classList.add("active");
+}
+
+document.querySelectorAll(".nav-item[data-view]").forEach((item) => {
   item.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
-    document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-    item.classList.add("active");
-    $("view-" + item.dataset.view).classList.add("active");
+    activateView(item.dataset.view);
     if (item.dataset.view === "docs") loadDocuments();
     closeSidebar();
   });
 });
 
-$("new-chat").addEventListener("click", () => {
+const agentsSection = document.querySelector(".agents-section");
+if (localStorage.getItem(AGENTS_COLLAPSED_KEY) === "1") agentsSection.classList.add("collapsed");
+$("agents-toggle").addEventListener("click", () => {
+  const collapsed = agentsSection.classList.toggle("collapsed");
+  localStorage.setItem(AGENTS_COLLAPSED_KEY, collapsed ? "1" : "0");
+  $("agents-toggle").setAttribute("aria-expanded", String(!collapsed));
+});
+
+function startNewChat() {
   state.sessionId = null;
+  localStorage.removeItem(SESSION_KEY);
   clearAttachment();
   showEmptyState();
-  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
-  document.querySelector('.nav-item[data-view="chat"]').classList.add("active");
-  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  $("view-chat").classList.add("active");
+  activateView("chat");
+  highlightActiveSession();
   closeSidebar();
   questionInput.focus();
-});
+}
+
+$("new-chat").addEventListener("click", startNewChat);
 
 async function loadAgents() {
   try {
@@ -162,6 +241,100 @@ async function loadAgents() {
     });
   } catch (error) {
     console.error("agents", error);
+  }
+}
+
+/* ---------- sessions ---------- */
+
+function highlightActiveSession() {
+  document.querySelectorAll(".session-item").forEach((item) => {
+    item.classList.toggle("active", item.dataset.sessionId === state.sessionId);
+  });
+}
+
+async function loadSessions() {
+  try {
+    const response = await fetch("/api/sessions");
+    const items = await response.json();
+    const box = $("sessions");
+    box.innerHTML = "";
+    if (!items.length) {
+      box.appendChild(el("div", "session-empty", "Suhbatlar hali yo'q"));
+      return;
+    }
+    items.forEach((session) => {
+      const row = el("div", "session-item");
+      row.dataset.sessionId = session.id;
+      row.setAttribute("role", "button");
+      const title = el("span", "s-title", session.title || "Yangi suhbat");
+      row.title = session.title || "";
+      const remove = el("button", "s-del", "×");
+      remove.title = "Suhbatni o'chirish";
+      remove.addEventListener("click", (event) => {
+        event.stopPropagation();
+        removeSession(session.id);
+      });
+      row.appendChild(title);
+      row.appendChild(remove);
+      row.addEventListener("click", () => {
+        openSession(session.id);
+        closeSidebar();
+      });
+      box.appendChild(row);
+    });
+    highlightActiveSession();
+  } catch (error) {
+    console.error("sessions", error);
+  }
+}
+
+async function removeSession(sessionId) {
+  try {
+    await fetch("/api/sessions/" + encodeURIComponent(sessionId), { method: "DELETE" });
+  } catch (error) {
+    console.error("delete session", error);
+  }
+  if (sessionId === state.sessionId) startNewChat();
+  loadSessions();
+}
+
+function renderAssistantMessage(content, sources) {
+  const wrap = el("div", "msg bot");
+  const bubble = el("div", "bubble");
+  bubble.innerHTML = renderMarkdown(stripDisclaimer(content));
+  wrap.appendChild(bubble);
+  messages.appendChild(wrap);
+  renderSources(wrap, sources);
+  wrap.appendChild(disclaimerBlock());
+}
+
+async function openSession(sessionId) {
+  try {
+    const response = await fetch("/api/sessions/" + encodeURIComponent(sessionId));
+    if (!response.ok) throw new Error("session missing");
+    const data = await response.json();
+    state.sessionId = sessionId;
+    localStorage.setItem(SESSION_KEY, sessionId);
+    messages.innerHTML = "";
+    data.messages.forEach((message) => {
+      if (message.role === "user") {
+        const fileMatch = message.content.match(/^\[Fayl: (.+?)\]\s*/);
+        addUserMessage(
+          fileMatch ? message.content.slice(fileMatch[0].length) : message.content,
+          fileMatch ? fileMatch[1] : null
+        );
+      } else {
+        renderAssistantMessage(message.content, message.sources);
+      }
+    });
+    if (!data.messages.length) showEmptyState();
+    activateView("chat");
+    highlightActiveSession();
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  } catch (error) {
+    localStorage.removeItem(SESSION_KEY);
+    state.sessionId = null;
+    showEmptyState();
   }
 }
 
@@ -214,8 +387,7 @@ function addUserMessage(text, fileName) {
   const wrap = el("div", "msg user");
   const bubble = el("div", "bubble");
   if (fileName) {
-    const tag = el("span", "file-tag", fileName);
-    bubble.appendChild(tag);
+    bubble.appendChild(el("span", "file-tag", fileName));
     bubble.appendChild(el("div", null, text));
   } else {
     bubble.textContent = text;
@@ -250,7 +422,16 @@ function renderSources(wrap, sources) {
   box.appendChild(el("div", "sources-title", "Manbalar"));
   sources.forEach((source) => {
     const button = el("button", "source");
-    button.appendChild(el("b", null, sourceLabel(source)));
+    if (source.source_url) {
+      const link = el("a", "source-link", sourceLabel(source));
+      link.href = source.source_url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.addEventListener("click", (event) => event.stopPropagation());
+      button.appendChild(link);
+    } else {
+      button.appendChild(el("b", "source-link", sourceLabel(source)));
+    }
     if (source.live) button.appendChild(el("span", "live-badge", "real vaqtda tekshirildi"));
     if (source.article_title) button.appendChild(el("span", null, source.article_title));
     button.addEventListener("click", () => openSource(source));
@@ -289,6 +470,7 @@ async function ask(question) {
     bubble.textContent = "Xatolik: " + error.message;
   } finally {
     setBusy(false);
+    loadSessions();
   }
 }
 
@@ -325,8 +507,10 @@ async function askAgentic(question, attachment, wrap, bubble, typing) {
   const data = await response.json();
   if (typing.isConnected) typing.remove();
   state.sessionId = data.session_id;
-  bubble.innerHTML = renderMarkdown(data.answer || "Javob olinmadi.");
+  localStorage.setItem(SESSION_KEY, data.session_id);
+  bubble.innerHTML = renderMarkdown(stripDisclaimer(data.answer || "Javob olinmadi."));
   renderSources(wrap, data.sources);
+  wrap.appendChild(disclaimerBlock());
 }
 
 async function askStreaming(question, attachment, wrap, bubble, typing) {
@@ -366,6 +550,7 @@ async function askStreaming(question, attachment, wrap, bubble, typing) {
 
       if (eventMatch[1] === "meta") {
         state.sessionId = payload.session_id;
+        localStorage.setItem(SESSION_KEY, payload.session_id);
       } else if (eventMatch[1] === "token") {
         if (typing.isConnected) typing.remove();
         answer += payload.text;
@@ -378,7 +563,13 @@ async function askStreaming(question, attachment, wrap, bubble, typing) {
       }
     }
   }
-  if (!answer) bubble.textContent = "Javob olinmadi.";
+  if (!answer) {
+    bubble.textContent = "Javob olinmadi.";
+    return;
+  }
+  bubble.innerHTML = renderMarkdown(stripDisclaimer(answer));
+  wrap.appendChild(disclaimerBlock());
+  scrollDown();
 }
 
 composer.addEventListener("submit", (event) => {
@@ -401,17 +592,33 @@ questionInput.addEventListener("keydown", (event) => {
   }
 });
 
+/* ---------- agentic ring toggle ---------- */
+
+$("agentic").addEventListener("click", () => {
+  state.agentic = !state.agentic;
+  $("agentic").classList.toggle("on", state.agentic);
+  $("agentic").setAttribute("aria-pressed", String(state.agentic));
+});
+
 /* ---------- documents ---------- */
 let documentsCache = [];
 
-async function loadDocuments() {
-  if (documentsCache.length) return renderDocuments(documentsCache);
-  const list = $("doc-list");
-  list.innerHTML = "";
-  list.appendChild(el("p", null, "Yuklanmoqda..."));
-  try {
+async function ensureDocuments() {
+  if (!documentsCache.length) {
     const response = await fetch("/api/documents");
     documentsCache = await response.json();
+  }
+  return documentsCache;
+}
+
+async function loadDocuments() {
+  const list = $("doc-list");
+  if (!documentsCache.length) {
+    list.innerHTML = "";
+    list.appendChild(el("p", null, "Yuklanmoqda..."));
+  }
+  try {
+    await ensureDocuments();
     renderDocuments(documentsCache);
   } catch (error) {
     list.innerHTML = "";
@@ -443,6 +650,58 @@ $("doc-query").addEventListener("input", (event) => {
   renderDocuments(documentsCache.filter((doc) => doc.title.toLowerCase().includes(needle)));
 });
 
+/* ---------- global search ---------- */
+
+function openGlobalSearch() {
+  $("search-modal").hidden = false;
+  $("global-query").value = "";
+  renderSearchResults("");
+  closeSidebar();
+  ensureDocuments().then(() => renderSearchResults($("global-query").value));
+  $("global-query").focus();
+}
+
+function closeGlobalSearch() {
+  $("search-modal").hidden = true;
+}
+
+function renderSearchResults(needle) {
+  const box = $("search-results");
+  box.innerHTML = "";
+  const query = needle.trim().toLowerCase();
+  if (!query) {
+    box.appendChild(el("p", "search-note", "Hujjat nomini yozing — masalan, \"mehnat kodeksi\"."));
+    return;
+  }
+  const matches = documentsCache
+    .filter((doc) => doc.title.toLowerCase().includes(query))
+    .slice(0, 30);
+  if (!matches.length) {
+    box.appendChild(el("p", "search-note", "Hech narsa topilmadi."));
+    return;
+  }
+  matches.forEach((doc) => {
+    const row = el("button", "search-hit");
+    row.appendChild(document.createTextNode(doc.title));
+    const bits = [doc.adopted_date, doc.articles ? doc.articles + " modda" : null]
+      .filter(Boolean)
+      .join(" · ");
+    if (bits) row.appendChild(el("small", null, bits));
+    row.addEventListener("click", () => {
+      closeGlobalSearch();
+      openDocument(doc.doc_id);
+    });
+    box.appendChild(row);
+  });
+}
+
+$("nav-search").addEventListener("click", openGlobalSearch);
+$("search-close").addEventListener("click", closeGlobalSearch);
+$("search-modal").addEventListener("click", (event) => {
+  if (event.target === $("search-modal")) closeGlobalSearch();
+});
+$("global-query").addEventListener("input", (event) => renderSearchResults(event.target.value));
+
 /* ---------- modal ---------- */
 function showModal(title, url, build) {
   $("modal-title").textContent = title;
@@ -454,6 +713,7 @@ function showModal(title, url, build) {
     link.hidden = true;
   }
   const body = $("modal-body");
+  body.className = "modal-body";
   body.innerHTML = "";
   build(body);
   $("modal").hidden = false;
@@ -463,7 +723,7 @@ function openSource(source) {
   showModal(sourceLabel(source), source.source_url, (body) => {
     if (source.article_title) {
       const heading = el("p", null, source.article_title);
-      heading.style.fontWeight = "600";
+      heading.style.fontWeight = "700";
       body.appendChild(heading);
     }
     // a live hit carries no text of its own: the base does not hold the document yet
@@ -509,7 +769,10 @@ $("modal").addEventListener("click", (event) => {
   if (event.target === $("modal")) $("modal").hidden = true;
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") $("modal").hidden = true;
+  if (event.key === "Escape") {
+    $("modal").hidden = true;
+    closeGlobalSearch();
+  }
 });
 
 async function loadFreshness() {
@@ -527,10 +790,14 @@ async function loadFreshness() {
   }
 }
 
-$("agentic").addEventListener("change", (event) => {
-  state.agentic = event.target.checked;
-});
+/* ---------- startup ---------- */
 
-showEmptyState();
+const savedSession = localStorage.getItem(SESSION_KEY);
+if (savedSession) {
+  openSession(savedSession);
+} else {
+  showEmptyState();
+}
 loadAgents();
+loadSessions();
 loadFreshness();
