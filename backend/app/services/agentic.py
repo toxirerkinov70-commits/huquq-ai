@@ -7,7 +7,7 @@ what it finds there feeds the next refresh.
 
 import logging
 
-from .generate import SYSTEM_PROMPT, build_sources
+from .generate import SYSTEM_PROMPT
 from .llm import LLMClient
 from .tools import MAX_TOOL_CALLS, TOOL_DECLARATIONS, ToolBox
 
@@ -128,6 +128,3 @@ def _cited(call: dict, result: dict) -> list[dict]:
             }
         ]
     return []
-
-
-__all__ = ["answer_with_tools", "build_sources"]

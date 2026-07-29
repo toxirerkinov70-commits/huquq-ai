@@ -85,6 +85,11 @@ async def main_async(mode: str, k: int, verbose: bool, path: Path) -> int:
 
 
 def main() -> int:
+    # on Windows a redirected stdout defaults to the ANSI codepage, which cannot encode
+    # the apostrophes in Uzbek titles and kills the run right after the scores
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Evaluate retrieval quality")
     parser.add_argument("--mode", choices=("hybrid", "dense", "sparse"), default="hybrid")
     parser.add_argument("--k", type=int, default=10)
