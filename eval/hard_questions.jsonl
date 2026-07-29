@@ -1,0 +1,22 @@
+{"id": 101, "kind": "boundary", "question": "O'g'rilik uchun qancha jarima to'lanadi?", "doc_id": "-111453", "article_no": "169", "tag": "bhm_partial"}
+{"id": 102, "kind": "boundary", "question": "Mehnat daftarchasi qanday yuritiladi va unga qanday yozuvlar kiritiladi?", "doc_id": "-6257288", "article_no": "125", "tag": "detail_missing"}
+{"id": 103, "kind": "cross_code", "question": "Do'kondan 200 ming so'mlik mahsulot o'g'irlasam, bu ma'muriy huquqbuzarlikmi yoki jinoyatmi?", "doc_id": "-97664", "article_no": "61", "tag": "mjk_vs_jk"}
+{"id": 104, "kind": "split_doc", "question": "FKning 1113-moddasi nima haqida?", "doc_id": "-180552", "article_no": "1113", "tag": "fk_second_part"}
+{"id": 105, "kind": "split_doc", "question": "Fuqarolik kodeksida servitut qanday tartibga solingan?", "doc_id": "-111189", "article_no": "173", "tag": "fk_first_part"}
+{"id": 106, "kind": "table", "question": "Banklar uchun foyda solig'i stavkasi necha foiz?", "doc_id": "-4674902", "article_no": "337", "tag": "table"}
+{"id": 107, "kind": "table", "question": "Yuridik shaxslar uchun yer solig'ining bazaviy stavkalari qanday o'lchamda belgilanadi?", "doc_id": "-4674902", "article_no": "429", "tag": "table,similar_titles"}
+{"id": 108, "kind": "colloquial", "question": "Meni ishdan haydashdi, sudga bera olamanmi?", "doc_id": "-6257288", "article_no": "174", "agent": "mehnat", "tag": "known_gap"}
+{"id": 109, "kind": "colloquial", "question": "Qo'shnim mening yerimdan o'tib yuribdi, uni to'xtata olamanmi?", "doc_id": "-111189", "article_no": "173", "agent": "fuqarolik"}
+{"id": 110, "kind": "colloquial", "question": "Meni militsiya ushlab oldi va besh soatdan beri qo'yib yuborishmayapti, bu qonuniymi?", "doc_id": "-111460", "article_no": "226", "agent": "sud"}
+{"id": 111, "kind": "regression", "question": "Men TBC bankdan mikroqarz olganman. To'lov sanasidan 1 kun o'tgan holatda men to'lov qila olmasam mening hisobimga 50 ming so'm qarz miqdorida qo'shib qo'yyabdi va men uni to'lashga majburmanmi?", "doc_id": "-5972411", "article_no": "35", "tag": "salvage"}
+{"id": 112, "kind": "regression", "question": "Men odam o'ldirib qo'ydim, menga qanday jazo beriladi?", "doc_id": "-111453", "article_no": "97", "agent": "jinoyat", "tag": "facets"}
+{"id": 113, "kind": "regression", "question": "Men shartnomani imzolab qo'yganman, endi uni bekor qila olmasam nima bo'ladi?", "doc_id": "-111189", "article_no": "382", "agent": "shartnoma", "tag": "first_person_vocab"}
+{"id": 114, "kind": "superscript", "question": "Soliq kodeksining 289-1-moddasida qanday stavkalar belgilangan?", "doc_id": "-4674902", "article_no": "289-1", "tag": "superscript"}
+{"id": 115, "kind": "superscript", "question": "JPKning 586-5-moddasi nimani belgilaydi?", "doc_id": "-111460", "article_no": "586-5", "tag": "superscript"}
+{"id": 116, "kind": "superscript", "question": "FKning 173-moddasi bilan 173-2-moddasi o'rtasida qanday farq bor?", "doc_id": "-111189", "article_no": "173-2", "tag": "two_articles"}
+{"id": 117, "kind": "competing", "question": "Zaruriy mudofaa holatida odam o'ldirilsa jazo qanday bo'ladi?", "doc_id": "-111453", "article_no": "100", "agent": "jinoyat", "tag": "not_97"}
+{"id": 118, "kind": "competing", "question": "Kuchli ruhiy hayajonlanish holatida sodir etilgan qotillik oddiy qotillikdan nimasi bilan farq qiladi?", "doc_id": "-111453", "article_no": "98", "agent": "jinoyat"}
+{"id": 119, "kind": "multipart", "question": "Nikoh qaysi yoshdan tuziladi va nikohdan o'tish uchun qancha davlat boji to'lanadi?", "doc_id": "-104720", "article_no": "15", "tag": "second_part_missing"}
+{"id": 120, "kind": "language", "question": "Какой срок исковой давности установлен по общему правилу?", "doc_id": "-111189", "article_no": "150", "tag": "russian_zero_corpus"}
+{"id": 121, "kind": "court", "question": "Sudlar fuqaroni muomalaga layoqatsiz deb topishda qanday holatlarga e'tibor berishi kerak?", "doc_id": "-8345381", "article_no": null}
+{"id": 122, "kind": "court", "question": "Iqtisodiy sudlar to'lovga qobiliyatsizlik to'g'risidagi qonunni qo'llashda nimaga amal qiladi?", "doc_id": "-7613661", "article_no": null}

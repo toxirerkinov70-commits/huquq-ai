@@ -5,3 +5,4 @@ __pycache__/
 *.jsonl
 *.db
 !eval/questions.jsonl
+!eval/hard_questions.jsonl

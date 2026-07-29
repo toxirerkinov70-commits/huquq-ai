@@ -16,8 +16,8 @@ from backend.app.services.retrieval import Retriever  # noqa: E402
 QUESTIONS_PATH = ROOT / "eval" / "questions.jsonl"
 
 
-def load_questions() -> list[dict]:
-    with QUESTIONS_PATH.open(encoding="utf-8") as handle:
+def load_questions(path: Path) -> list[dict]:
+    with path.open(encoding="utf-8") as handle:
         return [json.loads(line) for line in handle if line.strip()]
 
 
@@ -29,8 +29,8 @@ def rank_of(hits: list, doc_id: str, article_no: str) -> int | None:
     return None
 
 
-async def main_async(mode: str, k: int, verbose: bool) -> int:
-    questions = load_questions()
+async def main_async(mode: str, k: int, verbose: bool, path: Path) -> int:
+    questions = load_questions(path)
     retriever = Retriever()
     rows = []
 
@@ -89,10 +89,20 @@ def main() -> int:
     parser.add_argument("--mode", choices=("hybrid", "dense", "sparse"), default="hybrid")
     parser.add_argument("--k", type=int, default=10)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--questions",
+        type=Path,
+        default=QUESTIONS_PATH,
+        help="question file to score; hard_questions.jsonl holds the harder set",
+    )
     args = parser.parse_args()
 
+    if not args.questions.exists():
+        print(f"{args.questions} topilmadi")
+        return 1
+
     logging.basicConfig(level="WARNING")
-    return asyncio.run(main_async(args.mode, args.k, args.verbose))
+    return asyncio.run(main_async(args.mode, args.k, args.verbose, args.questions))
 
 
 if __name__ == "__main__":
