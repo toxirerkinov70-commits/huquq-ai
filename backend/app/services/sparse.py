@@ -15,6 +15,11 @@ NGRAM_WEIGHT = 0.35
 
 # how many times a chunk's heading is repeated before its body when indexing
 HEADING_REPEAT = 3
+# a heading line longer than this is a sentence, not a title. Court rulings carry their
+# whole thesis in the title field ("Bankning aybi bilan ... penya undiriladi"), so
+# repeating it for weight hands them a keyword match on half the words of any question
+# about payments. Such a line is indexed once.
+MAX_REPEATED_HEADING = 160
 
 TOKEN_RE = re.compile(r"[\w'ʻʼ‘’-]+", re.UNICODE)
 # lex.uz mixes apostrophe glyphs, so oʻzbek and o'zbek must collapse to one token
@@ -26,6 +31,12 @@ STOPWORDS = {
     "quyidagi", "quyidagilar", "hollarda", "tomonidan", "asosida", "doir",
     # question words carry no signal but match many articles
     "qaysi", "qanday", "qancha", "nima", "necha", "nechta", "kim", "qayerda",
+    # someone describing their own case writes in the first person, which legislation
+    # never does: these match nothing and, worse, look like words the corpus lacks
+    "men", "mening", "menga", "meni", "mendan", "menda", "manga",
+    "biz", "bizning", "bizga", "bizni", "bizdan", "bizda",
+    "sen", "sening", "senga", "seni", "siz", "sizning", "sizga", "sizni",
+    "uning", "unga", "uni", "undan", "unda", "ular", "ularning", "ularga",
 }
 
 
@@ -65,10 +76,24 @@ def document_text(heading: str, body: str) -> str:
 
     The body is the full text, not the shortened form the dense vector gets: a table
     drags an averaged vector around, but it costs keyword matching nothing.
+
+    Only short lines are repeated, and a line is never counted twice: court rulings
+    have no article title of their own, so the extractor fills it with the document
+    title and the same sentence arrives here twice before repetition even begins.
     """
     if not heading:
         return body
-    return "\n".join([heading] * HEADING_REPEAT + [body])
+    lines: list[str] = []
+    for line in heading.splitlines():
+        line = line.strip()
+        if line and line not in lines:
+            lines.append(line)
+
+    weighted: list[str] = []
+    for line in lines:
+        repeat = HEADING_REPEAT if len(line) <= MAX_REPEATED_HEADING else 1
+        weighted.extend([line] * repeat)
+    return "\n".join(weighted + [body])
 
 
 def encode_document(text: str) -> tuple[list[int], list[float]]:

@@ -20,12 +20,24 @@ TOOL_RULES = f"""Vositalardan foydalanish qoidalari:
   yo'qligini bildiradi: `missing_terms` dagi so'zlar korpusda umuman uchramaydi.
   Natijalar qanchalik ishonchli ko'rinmasin, ular boshqa tushuncha haqida — javob
   o'rniga qo'yma. Bunday holatda `search_lex_live` ni chaqirish **majburiy**.
+- `coverage: "off_topic"` bo'lsa, atama bazada bor, lekin qidiruv boshqa mavzuga
+  og'ib ketgan. `search_legal_base` ni faqat `missing_terms` dagi atamalar bilan
+  qayta chaqir. Shundan keyin ham topilmasa, o'sha natijalarga tayanma.
 - `check_lex_live` va `search_lex_live` sekin va lex.uz ga yuk beradi. Ularni yuqoridagi
   holatdan tashqari faqat ma'lumot eskirgan bo'lishi mumkin bo'lganda chaqir.
 - Jami {MAX_TOOL_CALLS} tadan ortiq vosita chaqirmang.
 - lex.uz dan real vaqtda olingan ma'lumotni javobda "real vaqtda tekshirildi" deb belgila.
 - lex.uz da topilgan hujjat bazada bo'lmasa, uning matnini o'ylab topma: nomi va havolasini
-  ko'rsatib, tafsilotlar bazada yo'qligini ayt."""
+  ko'rsatib, tafsilotlar bazada yo'qligini ayt.
+
+Foydalanuvchi o'z vaziyatini bayon qilsa (bir ish qilgan yoki unga nisbatan qilingan),
+bitta qidiruv bilan cheklanma — javob bermasdan oldin kamida shularni izla:
+1. qilmishni nomlaydigan modda (kvalifikatsiya);
+2. uning oqibati: javobgarlik, jazo yoki undiruv normasi;
+3. oqibatni o'zgartiradigan normalar: yengillashtiruvchi va og'irlashtiruvchi holatlar,
+   javobgarlikdan ozod qilish asoslari, da'vo yoki murojaat muddati.
+Ularning har biri uchun alohida `search_legal_base` chaqiruvi qil — bu normalar
+foydalanuvchining so'zlari bilan topilmaydi, ularni o'z nomi bilan qidirish kerak."""
 
 
 async def answer_with_tools(
@@ -33,12 +45,13 @@ async def answer_with_tools(
     retriever,
     llm: LLMClient,
     history: list[dict] | None = None,
-    agent_prompt: str | None = None,
+    agent=None,
     attachment_block: str | None = None,
     extra_parts: list[dict] | None = None,
 ) -> tuple[str, list[dict], list[dict]]:
     """Returns the answer, its sources, and the log of what the model called."""
-    toolbox = ToolBox(retriever)
+    toolbox = ToolBox(retriever, agent)
+    agent_prompt = agent.prompt if agent is not None else None
     system = "\n\n".join(part for part in (SYSTEM_PROMPT, TOOL_RULES, agent_prompt) if part)
 
     prompt = f"Savol: {question}"
@@ -90,7 +103,7 @@ def _cited(call: dict, result: dict) -> list[dict]:
     if call["tool"] == "search_legal_base":
         # the model was told not to answer from these, so listing them under the answer
         # would present the neighbouring concept as the source after all
-        if result.get("coverage") == "weak":
+        if result.get("coverage") in ("weak", "off_topic"):
             return []
         return [
             {

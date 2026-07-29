@@ -113,6 +113,13 @@ function disclaimerBlock() {
   return box;
 }
 
+// once a conversation starts every answer carries the notice, so the one under the
+// composer would repeat it a second time on the same screen
+function syncComposerNotice() {
+  const notice = $("composer-disclaimer");
+  if (notice) notice.hidden = Boolean(messages.querySelector(".msg"));
+}
+
 /* ---------- welcome screen ---------- */
 
 const AGENT_MODE_INFO = `Agent rejimi yoqilganda javob topish jarayonini modelning o'zi boshqaradi.
@@ -163,6 +170,7 @@ function showEmptyState() {
 
   empty.appendChild(grid);
   messages.appendChild(empty);
+  syncComposerNotice();
 }
 
 function showAgentInfo() {
@@ -306,6 +314,7 @@ function renderAssistantMessage(content, sources) {
   messages.appendChild(wrap);
   renderSources(wrap, sources);
   wrap.appendChild(disclaimerBlock());
+  syncComposerNotice();
 }
 
 async function openSession(sessionId) {
@@ -394,6 +403,7 @@ function addUserMessage(text, fileName) {
   }
   wrap.appendChild(bubble);
   messages.appendChild(wrap);
+  syncComposerNotice();
   scrollDown();
 }
 

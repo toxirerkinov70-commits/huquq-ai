@@ -1,13 +1,13 @@
 import asyncio
 import logging
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from qdrant_client import AsyncQdrantClient, models
 
 from ..config import settings
-from . import aliases
+from . import aliases, coverage
 from .embedding import get_embedding_client
+from .query import ARTICLE_RE, SUPERSCRIPTS, detect_article_no  # noqa: F401  (re-exported)
 from .sparse import encode_query
 
 logger = logging.getLogger(__name__)
@@ -15,12 +15,13 @@ logger = logging.getLogger(__name__)
 DENSE_VECTOR = "dense"
 SPARSE_VECTOR = "sparse"
 RRF_K = 60
-SUPERSCRIPTS = "⁰¹²³⁴⁵⁶⁷⁸⁹"
 
-# "125-modda", "125 moddasi", "FKning 125-moddasi", "173²-modda", "173-2-modda"
-ARTICLE_RE = re.compile(
-    rf"(\d+)(?:\s*[-–]\s*(\d)|([{SUPERSCRIPTS}]))?\s*[-–]?\s*modda", re.IGNORECASE
-)
+# how far down the results the distinctive terms of the question are looked for, and
+# what share of them has to be absent before the search is judged to have drifted.
+# Below three quarters the pass fires on questions that were already answered and
+# costs precision; measured on eval/questions.jsonl.
+SALVAGE_CHECK_TOP = 3
+SALVAGE_MISSING_SHARE = 0.75
 
 
 @dataclass
@@ -60,6 +61,14 @@ class Hit:
 EXPAND_SYSTEM = """Sen O'zbekiston qonunchiligi bo'yicha qidiruv so'rovlarini kengaytirasan.
 Berilgan savolni huquqiy atamalar bilan 2 ta muqobil shaklda qayta yoz.
 Savol mazmunini o'zgartirma, faqat boshqacha ifodala.
+
+Agar savol foydalanuvchi boshidan kechirgan vaziyat bayoni bo'lsa (kimdir bir ish
+qilgan yoki unga nisbatan qilingan), so'rovlarni shunday tuz:
+- birinchisi — qilmishning rasmiy huquqiy nomi (masalan "mikroqarzni o'z vaqtida
+  to'lamaganlik uchun neustoyka");
+- ikkinchisi — shu qilmishning oqibati: javobgarlik, jazo yoki undiruv normasi.
+Kundalik so'zlarni qonun matnidagi atamalarga almashtir.
+
 Faqat JSON qaytar: {"queries": ["...", "..."]}"""
 
 REWRITE_SYSTEM = """Sen suhbat tarixiga qarab foydalanuvchining oxirgi savolini
@@ -93,18 +102,6 @@ async def rewrite_followup(question: str, history: list[dict], llm) -> str:
         return question
     rewritten = rewritten.strip()
     return rewritten or question
-
-
-def detect_article_no(query: str) -> str | None:
-    match = ARTICLE_RE.search(query)
-    if match is None:
-        return None
-    base, dashed, superscript = match.groups()
-    if dashed:
-        return f"{base}-{dashed}"
-    if superscript:
-        return f"{base}-{SUPERSCRIPTS.index(superscript)}"
-    return base
 
 
 def _to_hits(points, source: str) -> list[Hit]:
@@ -204,6 +201,34 @@ class Retriever:
             for point in points
         ]
 
+    async def _salvage(
+        self, query: str, fused: list[Hit], filters: SearchFilters, k: int
+    ) -> list[Hit]:
+        """Search the question's distinctive words on their own when the results miss them.
+
+        A sentence-long question is mostly words every article uses. They match anything
+        that mentions a payment or a deadline, and the one term that names the subject is
+        a single token among dozens, so the ranking can fill up with documents that never
+        contain it. Dropping the generic words removes that dilution: the same corpus that
+        answered a question about a microloan with tax-penalty case law returns the
+        microfinance law itself once only "mikroqarz" is asked for.
+        """
+        terms = coverage.rare_terms(query)
+        if not terms:
+            return fused
+        top = [hit.payload for hit in fused[:SALVAGE_CHECK_TOP]]
+        missing = coverage.terms_missing_from(terms, top) if top else terms
+        # one distinctive word absent is normal — a question rarely uses every word its
+        # answer does. Nearly all of them absent is the results being about something else.
+        if len(missing) < len(terms) * SALVAGE_MISSING_SHARE:
+            return fused
+
+        logger.info("top results miss %s, searching those terms alone", missing)
+        extra = await self.sparse_search(" ".join(terms), k=max(k, 20), filters=filters)
+        if not extra:
+            return fused
+        return reciprocal_rank_fusion([fused, extra])
+
     async def hybrid_search(
         self,
         query: str,
@@ -216,12 +241,7 @@ class Retriever:
             detected = aliases.detect_documents(query)
             if detected:
                 logger.info("query names %s document(s)", len(detected))
-                filters = SearchFilters(
-                    doc_ids=detected,
-                    act_types=filters.act_types,
-                    okoz=filters.okoz,
-                    status=filters.status,
-                )
+                filters = replace(filters, doc_ids=detected)
 
         queries = [query] + [v for v in (variants or []) if v and v != query]
         searches = []
@@ -231,6 +251,7 @@ class Retriever:
         rankings = await asyncio.gather(*searches)
 
         fused = reciprocal_rank_fusion([ranking for ranking in rankings if ranking])
+        fused = await self._salvage(query, fused, filters, k)
 
         article_no = detect_article_no(query)
         if article_no:

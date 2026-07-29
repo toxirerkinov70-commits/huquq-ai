@@ -106,7 +106,9 @@
         </form>
         <input type="file" id="file-input" hidden
                accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt,.md,application/pdf,image/png,image/jpeg,image/webp">
-        <p class="disclaimer">Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.</p>
+        <!-- every answer carries its own advisory notice; this one covers the empty
+             chat, where there is no answer to attach it to -->
+        <p class="disclaimer" id="composer-disclaimer">Javoblar tavsiyaviy xarakterga ega, aniq huquqiy maslahat uchun yuristga murojaat qiling.</p>
       </div>
     </section>
 

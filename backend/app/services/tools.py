@@ -10,6 +10,7 @@ import asyncio
 import json
 import logging
 import threading
+from dataclasses import replace
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -44,9 +45,13 @@ TOOL_DECLARATIONS = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Qidiruv so'rovi"},
-                "doc_type": {
-                    "type": "string",
-                    "description": "Ixtiyoriy: hujjat turi bo'yicha cheklash, masalan 'Kodeks'",
+                "act_type": {
+                    "type": "integer",
+                    "description": (
+                        "Ixtiyoriy: hujjat turi bo'yicha cheklash. "
+                        "1 — Konstitutsiya, 21 — kodekslar, 22 — qonunlar, "
+                        "3 — prezident hujjatlari, 4 — hukumat qarorlari"
+                    ),
                 },
             },
             "required": ["query"],
@@ -183,8 +188,9 @@ def _queued() -> list[dict]:
 class ToolBox:
     """Executes the model's tool calls and keeps a log of what it asked for."""
 
-    def __init__(self, retriever) -> None:
+    def __init__(self, retriever, agent=None) -> None:
         self.retriever = retriever
+        self.agent = agent
         self.calls: list[dict] = []
         # what each call returned, so the answer can cite exactly what the model saw
         self.results: list[tuple[dict, dict]] = []
@@ -209,28 +215,32 @@ class ToolBox:
         self.results.append((call, result))
         return result
 
-    async def _search_legal_base(self, query: str, doc_type: str | None = None) -> dict:
-        filters = SearchFilters(doc_type=doc_type) if doc_type else SearchFilters()
+    async def _search_legal_base(self, query: str, act_type: int | None = None) -> dict:
+        # the mode the user picked narrows the corpus here exactly as it does on the
+        # streaming path, so the same question does not reach two different bases
+        filters = self.agent.filters() if self.agent is not None else SearchFilters()
+        if act_type is not None and not filters.act_types:
+            filters = replace(filters, act_types=[int(act_type)])
         hits = await self.retriever.hybrid_search(query, k=6, filters=filters)
+        payloads = [hit.payload for hit in hits]
         result = {
             "results": [
                 {
-                    "doc_id": hit.payload.get("doc_id"),
-                    "doc_title": hit.payload.get("doc_title"),
-                    "article_no": hit.payload.get("article_no_display")
-                    or hit.payload.get("article_no"),
-                    "article_title": hit.payload.get("article_title"),
-                    "text": (hit.payload.get("text") or "")[:SNIPPET],
-                    "source_url": hit.payload.get("source_url"),
+                    "doc_id": payload.get("doc_id"),
+                    "doc_title": payload.get("doc_title"),
+                    "article_no": payload.get("article_no_display") or payload.get("article_no"),
+                    "article_title": payload.get("article_title"),
+                    "text": (payload.get("text") or "")[:SNIPPET],
+                    "source_url": payload.get("source_url"),
                 }
-                for hit in hits
+                for payload in payloads
             ]
         }
         # ranking cannot say whether these are the right articles or merely the closest
         # ones; the vocabulary check can, and the model reads it here beside the results
-        verdict = coverage.assess(query)
+        verdict = coverage.assess(query, payloads)
         if verdict is not None:
-            self.weak_coverage = True
+            self.weak_coverage = verdict["coverage"] == "weak"
             result.update(verdict)
         else:
             result["coverage"] = "good"

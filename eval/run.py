@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.app.services.retrieval import Retriever, SearchFilters  # noqa: E402
+from backend.app.services.agents import get_agent  # noqa: E402
+from backend.app.services.retrieval import Retriever  # noqa: E402
 
 QUESTIONS_PATH = ROOT / "eval" / "questions.jsonl"
 
@@ -35,14 +36,15 @@ async def main_async(mode: str, k: int, verbose: bool) -> int:
 
     try:
         for question in questions:
+            # a question asked in a domain mode is searched in that mode, otherwise the
+            # score measures a path no user takes
+            filters = get_agent(question.get("agent")).filters()
             if mode == "dense":
-                hits = await retriever.dense_search(question["question"], k=k)
+                hits = await retriever.dense_search(question["question"], k=k, filters=filters)
             elif mode == "sparse":
-                hits = await retriever.sparse_search(question["question"], k=k)
+                hits = await retriever.sparse_search(question["question"], k=k, filters=filters)
             else:
-                hits = await retriever.hybrid_search(
-                    question["question"], k=k, filters=SearchFilters()
-                )
+                hits = await retriever.hybrid_search(question["question"], k=k, filters=filters)
             rank = rank_of(hits, question["doc_id"], question["article_no"])
             rows.append((question, rank, hits))
             if verbose:

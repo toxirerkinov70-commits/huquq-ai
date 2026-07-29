@@ -68,3 +68,6 @@
 {"id": 68, "kind": "semantic", "question": "Jismoniy shaxslardan olinadigan mol-mulk solig'i stavkasi qancha?", "doc_id": "-4674902", "article_no": "422", "tag": "table"}
 {"id": 69, "kind": "semantic", "question": "Yuridik shaxslar uchun yer solig'ining bazaviy stavkalari qanday o'lchamda belgilanadi?", "doc_id": "-4674902", "article_no": "429", "tag": "table"}
 {"id": 70, "kind": "semantic", "question": "Suv obyektlarining suvni muhofaza qilish zonalari qanday belgilanadi?", "doc_id": "-7655343", "article_no": "126", "tag": "table"}
+{"id": 71, "kind": "situation", "question": "Men bankdan mikroqarz olganman. To'lov sanasidan bir kun o'tgach hisobimga 50 ming so'm qo'shib qo'yishdi, men uni to'lashga majburmanmi?", "doc_id": "-5972411", "article_no": "35", "tag": "colloquial", "agent": "umumiy"}
+{"id": 72, "kind": "situation", "question": "Men odam o'ldirib qo'ydim, menga qanday jazo beriladi?", "doc_id": "-111453", "article_no": "97", "tag": "colloquial", "agent": "jinoyat"}
+{"id": 73, "kind": "situation", "question": "Ishdan asossiz bo'shatishdi, nima qilishim kerak?", "doc_id": "-6257288", "article_no": "174", "tag": "colloquial", "agent": "mehnat"}

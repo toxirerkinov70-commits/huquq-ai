@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import time
@@ -16,12 +17,15 @@ from ..services import attachments as attachments_service
 from ..services import generate as generate_service
 from ..services.rerank import TOP_N as RERANK_TOP_N
 from ..services.rerank import rerank
+from ..services.query import is_situation
 from ..services.retrieval import detect_article_no, expand_query, rewrite_followup
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["chat"])
 
 CANDIDATE_K = 20
+# a companion search backs one idea, so it contributes its best couple of articles
+FACET_K = 2
 
 
 def _sse(event: str, data: dict) -> str:
@@ -53,8 +57,34 @@ def _user_text(payload: ChatRequest) -> str:
     return payload.question
 
 
+async def _facet_hits(retriever, agent, hits: list, wanted: bool) -> list:
+    """The norms that shape the outcome, which the question's own words never reach.
+
+    They are searched separately and appended rather than fused in: fusing would let
+    them compete with the articles that actually answer the question, and the point is
+    to add the mitigating or limitation article underneath, not to promote it.
+    """
+    if not agent.facets or not wanted:
+        return hits
+
+    filters = agent.filters()
+    found = await asyncio.gather(
+        *(retriever.hybrid_search(facet, k=FACET_K, filters=filters) for facet in agent.facets)
+    )
+    seen = {hit.chunk_id for hit in hits}
+    extra = []
+    for ranking in found:
+        for hit in ranking:
+            if hit.chunk_id not in seen:
+                seen.add(hit.chunk_id)
+                extra.append(hit)
+    if extra:
+        logger.info("agent %s added %s companion chunk(s)", agent.key, len(extra))
+    return hits + extra
+
+
 async def _retrieve(request: Request, payload: ChatRequest, agent, history) -> list:
-    """The plain-question path: rewrite, expand, retrieve, rerank."""
+    """The plain-question path: rewrite, expand, retrieve, rerank, add companions."""
     retriever = request.app.state.retriever
     llm = request.app.state.llm
 
@@ -62,7 +92,7 @@ async def _retrieve(request: Request, payload: ChatRequest, agent, history) -> l
 
     # a question that names an article or a code is already precisely targeted,
     # so paraphrasing it only spends quota
-    targeted = detect_article_no(search_query) or aliases.detect_documents(search_query)
+    targeted = bool(detect_article_no(search_query) or aliases.detect_documents(search_query))
     variants = (
         await expand_query(search_query, llm)
         if settings.enable_query_expansion and not targeted
@@ -76,7 +106,9 @@ async def _retrieve(request: Request, payload: ChatRequest, agent, history) -> l
         hits = await rerank(search_query, hits, llm)
     else:
         hits = hits[:RERANK_TOP_N]
-    return hits
+    return await _facet_hits(
+        retriever, agent, hits, wanted=not targeted and is_situation(payload.question)
+    )
 
 
 async def _prepare_attachment(request: Request, payload: ChatRequest, agent) -> tuple:
@@ -99,6 +131,8 @@ async def _prepare_attachment(request: Request, payload: ChatRequest, agent) -> 
         hits = await rerank(payload.question, hits, llm)
     else:
         hits = hits[:RERANK_TOP_N]
+    # an uploaded contract or ruling is the user's own situation by definition
+    hits = await _facet_hits(retriever, agent, hits, wanted=True)
 
     block = attachments_service.prompt_block(prepared, analysis)
     return hits, block, prepared.parts or None
@@ -140,7 +174,7 @@ async def chat_agentic(request: Request, payload: ChatRequest):
         request.app.state.retriever,
         llm,
         history,
-        agent.prompt,
+        agent,
         attachment_block=attachment_block,
         extra_parts=extra_parts,
     )
