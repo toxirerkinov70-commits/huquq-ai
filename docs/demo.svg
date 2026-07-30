@@ -119,6 +119,13 @@
         <g class="spark">
           <circle cx="60" cy="145" r="3.2" fill="#ffffff"/>
         </g>
+        <g fill="#141F45">
+          <rect x="40" y="128" width="150" height="34" rx="17"/>
+          <rect x="204" y="128" width="118" height="34" rx="17"/>
+          <rect x="336" y="128" width="142" height="34" rx="17"/>
+          <rect x="492" y="128" width="86" height="34" rx="17"/>
+          <rect x="592" y="128" width="150" height="34" rx="17"/>
+        </g>
         <g class="pill p1">
           <rect x="40" y="128" width="150" height="34" rx="17" fill="#141F45" stroke="#3B5BFD"/>
           <text x="115" y="150" fill="#B9C8F2" text-anchor="middle">modda detektori</text>
