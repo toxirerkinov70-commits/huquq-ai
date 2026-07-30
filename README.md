@@ -19,6 +19,7 @@ va har doim manba ko'rsatadi:** hujjat nomi, modda raqami va lex.uz havolasi.
 ![recall10](https://img.shields.io/badge/recall@10-0.99-2da44e?style=flat-square)
 ![mrr](https://img.shields.io/badge/MRR-0.780-2da44e?style=flat-square)
 ![ram](https://img.shields.io/badge/RAM-8%20GB%20da%20ishlaydi-8250df?style=flat-square)
+[![license](https://img.shields.io/badge/litsenziya-MIT-24292f?style=flat-square)](LICENSE)
 
 **[Qanday ishlaydi](#qanday-ishlaydi)** · **[Interfeys](#interfeys)** ·
 **[Nega gibrid](#4-nega-gibrid-qidiruv)** · **[Arxitektura](#3-arxitektura)** ·
@@ -843,5 +844,8 @@ LLM bepul tarifi kuniga ~120 so'rov bilan cheklangan.
 
 Manba: [lex.uz](https://lex.uz) — O'zbekiston Respublikasi qonun hujjatlari
 ma'lumotlar bazasi
+
+Kod [MIT litsenziyasi](LICENSE) ostida. Qonun hujjatlari matni lex.uz ga tegishli va
+repozitoriyga kiritilmagan — u parser orqali yig'iladi.
 
 </div>
