@@ -1,11 +1,11 @@
 <div align="center">
 
-# Huquq AI
+<img src="docs/hero.svg" alt="Huquq AI — O'zbekiston qonunchiligi bo'yicha hybrid-RAG tizimi" width="100%">
 
-**O'zbekiston Respublikasi qonunchiligi bo'yicha hybrid-RAG savol-javob tizimi**
+<br><br>
 
-Oddiy tilda savol bering — tizim amaldagi qonun moddasini topadi, uni tushuntiradi
-va **har doim manba ko'rsatadi**: hujjat nomi, modda raqami va lex.uz havolasi.
+**Oddiy tilda savol bering — tizim amaldagi qonun moddasini topadi, uni tushuntiradi
+va har doim manba ko'rsatadi:** hujjat nomi, modda raqami va lex.uz havolasi.
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -20,11 +20,43 @@ va **har doim manba ko'rsatadi**: hujjat nomi, modda raqami va lex.uz havolasi.
 ![mrr](https://img.shields.io/badge/MRR-0.780-2da44e?style=flat-square)
 ![ram](https://img.shields.io/badge/RAM-8%20GB%20da%20ishlaydi-8250df?style=flat-square)
 
+**[Qanday ishlaydi](#qanday-ishlaydi)** · **[Interfeys](#interfeys)** ·
+**[Nega gibrid](#4-nega-gibrid-qidiruv)** · **[Arxitektura](#3-arxitektura)** ·
+**[O'rnatish](#13-ornatish-va-ishga-tushirish)** · **[Kamchiliklar](KAMCHILIKLAR.md)**
+
 </div>
 
+---
+
+## Qanday ishlaydi
+
+Savol yoziladi → modda raqami va hujjat nomi detektorlari ishga tushadi → vektor va
+BM25 qidiruvi **parallel** ketadi → RRF birlashtiradi → LLM saralaydi → javob **faqat**
+topilgan modda matniga tayanib yoziladi.
+
 <div align="center">
-  <img src="docs/ui-welcome.png" alt="Huquq AI chat interfeysi" width="85%">
+  <img src="docs/demo.svg" alt="Savoldan manbali javobgacha" width="94%">
 </div>
+
+Tizim uch qoida ustiga qurilgan va ularning uchalasi ham **kodda** majburlanadi,
+prompt'da emas:
+
+|  | Qoida | Qayerda majburlanadi |
+|---|---|---|
+| **1** | Javob faqat indexlangan haqiqiy modda matniga tayanadi | `generate.py` · `answer_is_grounded()` |
+| **2** | Har bir da'vo yonida manba turadi — hujjat, modda, havola | `generate.py` · `filter_cited_sources()` |
+| **3** | Kontekstda javob bo'lmasa — **ochiq aytiladi**, to'qib chiqarilmaydi | `coverage.py` · korpus lug'ati |
+
+---
+
+## Interfeys
+
+<div align="center">
+  <img src="docs/ui-tour.gif" alt="Huquq AI interfeysi — suhbat, manbalar, qidiruv, agentik rejim" width="94%">
+</div>
+
+Vanilla JS, build qadamisiz, 813 qator: SSE streaming, yorug'/qorong'i tema, suhbat
+tarixi, hujjat yuklash, manbani bosganda modda to'liq matni modal'da ochiladi.
 
 ---
 
@@ -32,6 +64,7 @@ va **har doim manba ko'rsatadi**: hujjat nomi, modda raqami va lex.uz havolasi.
 
 | | | |
 |---|---|---|
+| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Kamchiliklar](KAMCHILIKLAR.md) |
 | [1. Muammo va yechim](#1-muammo-va-yechim) | [7. Qidiruv quvuri](#7-qidiruv-quvuri) | [13. O'rnatish](#13-ornatish-va-ishga-tushirish) |
 | [2. Bir qarashda](#2-bir-qarashda) | [8. Javob generatsiyasi](#8-javob-generatsiyasi) | [14. Baholash](#14-baholash) |
 | [3. Arxitektura](#3-arxitektura) | [9. Agent rejimlari](#9-agent-rejimlari) | [15. Muhandislik qarorlari](#15-muhandislik-qarorlari) |
@@ -52,17 +85,11 @@ Sof LLM bu muammoni hal qilmaydi, balki yangisini yaratadi: model qonun matnini
 **o'ylab topadi**. Huquqiy sohada bu eng xavfli xato — noto'g'ri modda raqami bilan
 berilgan ishonchli javob javob bermaslikdan battar.
 
-Shuning uchun tizim uch qoida ustiga qurilgan:
-
-> **1.** Javob faqat indexlangan haqiqiy modda matniga tayanadi.
->
-> **2.** Har bir da'vo yonida manba turadi — hujjat nomi, modda raqami, lex.uz havolasi.
->
-> **3.** Kontekstda javob bo'lmasa, tizim buni **ochiq aytadi**, to'qib chiqarmaydi.
-
-Uchinchi qoida shunchaki prompt qatori emas: u kodda `coverage.py` moduli orqali
-hisoblanadi ([7.6-bo'lim](#76-coverage--bazada-bunday-tushuncha-yoq)), chunki prompt
-yozuvi bu xatoni to'xtatmagan edi.
+Shuning uchun tizim [yuqoridagi uch qoida](#qanday-ishlaydi) ustiga qurilgan — va
+ularning hech biri prompt yozuvi bilan cheklanmaydi. Eng yaxshi misol uchinchisi: u
+kodda `coverage.py` moduli orqali hisoblanadi
+([7.6-bo'lim](#76-coverage--bazada-bunday-tushuncha-yoq)), chunki prompt'ga yozilgan
+"bilmasang aytma" qoidasi bu xatoni to'xtatmagan edi.
 
 ---
 
@@ -154,13 +181,9 @@ savol, bir xil korpus, faqat qidiruv usuli farq qiladi**:
 | sparse — faqat BM25 | 0.70 | 0.77 | 0.629 |
 | dense — faqat vektor | 0.52 | 0.70 | 0.466 |
 
-```mermaid
-xychart-beta
-    title "recall@5 — qidiruv usuli bo'yicha"
-    x-axis ["dense (vektor)", "sparse (BM25)", "hybrid (RRF)"]
-    y-axis "recall@5" 0 --> 1
-    bar [0.52, 0.70, 0.95]
-```
+<div align="center">
+  <img src="docs/hybrid.svg" alt="recall@5 taqqoslash: hybrid 0.95, sparse 0.70, dense 0.52" width="94%">
+</div>
 
 Savol turlari bo'yicha ajratilganda sabab ko'rinadi:
 
@@ -222,6 +245,10 @@ Bu javob sifatini sezilarli oshirdi: sud amaliyoti savollarida recall@5 = **1.00
 
 Xom HTML dan indexgacha to'rt bosqich. Har bosqich alohida ishga tushiriladi va
 uzilishdan tiklanadi.
+
+<div align="center">
+  <img src="docs/pipeline.svg" alt="Korpus quvuri: lex.uz dan Qdrant indeksigacha" width="94%">
+</div>
 
 ```mermaid
 flowchart TD

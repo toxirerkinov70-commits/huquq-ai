@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200" width="900" height="200" role="img" aria-label="Korpus quvuri: lex.uz dan Qdrant indeksigacha">
+  <title>Korpus quvuri</title>
+  <defs>
+    <linearGradient id="p-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0A0F1D"/>
+      <stop offset="1" stop-color="#0D1428"/>
+    </linearGradient>
+    <linearGradient id="p-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3B5BFD"/>
+      <stop offset="0.5" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#4ADE80"/>
+    </linearGradient>
+    <clipPath id="p-card"><rect width="900" height="200" rx="18"/></clipPath>
+    <filter id="p-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="4.5"/>
+    </filter>
+    <style>
+      .f { font-family: "Segoe UI", Inter, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif; }
+      .node { animation-duration: 9s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+      .n1{animation-name:na1} .n2{animation-name:na2} .n3{animation-name:na3}
+      .n4{animation-name:na4} .n5{animation-name:na5} .n6{animation-name:na6}
+      @keyframes na1 { 0%,4%{opacity:.3} 9%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+      @keyframes na2 { 0%,17%{opacity:.3} 22%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+      @keyframes na3 { 0%,30%{opacity:.3} 35%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+      @keyframes na4 { 0%,43%{opacity:.3} 48%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+      @keyframes na5 { 0%,56%{opacity:.3} 61%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+      @keyframes na6 { 0%,69%{opacity:.3} 74%{opacity:1} 96%{opacity:1} 100%{opacity:.3} }
+
+      .prog { stroke-dasharray: 640; stroke-dashoffset: 640; animation: pg 9s linear infinite; }
+      @keyframes pg { 0%{stroke-dashoffset:640} 4%{stroke-dashoffset:640} 78%{stroke-dashoffset:0} 96%{stroke-dashoffset:0} 100%{stroke-dashoffset:640} }
+
+      .dot { animation: mv 9s linear infinite; }
+      @keyframes mv { 0%,4%{transform:translateX(0);opacity:0} 6%{opacity:1} 78%{transform:translateX(640px);opacity:1} 84%{transform:translateX(640px);opacity:0} 100%{transform:translateX(640px);opacity:0} }
+    </style>
+  </defs>
+
+  <g clip-path="url(#p-card)">
+    <rect width="900" height="200" fill="url(#p-bg)"/>
+    <rect x="0.75" y="0.75" width="898.5" height="198.5" rx="17" fill="none" stroke="#25315C" stroke-width="1.5"/>
+
+    <text class="f" x="40" y="40" font-size="15" font-weight="700" fill="#C6D4F5">Korpus quvuri</text>
+    <text class="f" x="158" y="40" font-size="12.5" fill="#63769F">lex.uz → HTML → Markdown → chunk → vektor</text>
+
+    <line x1="90" y1="104" x2="730" y2="104" stroke="#1D2A50" stroke-width="3" stroke-linecap="round"/>
+    <line class="prog" x1="90" y1="104" x2="730" y2="104" stroke="url(#p-line)" stroke-width="3" stroke-linecap="round"/>
+
+    <g class="f" font-size="12" font-weight="600" text-anchor="middle">
+      <g class="node n1">
+        <circle cx="90" cy="104" r="13" fill="#111B38" stroke="#3B5BFD" stroke-width="2"/>
+        <circle cx="90" cy="104" r="4.5" fill="#3B5BFD"/>
+        <text x="90" y="80" fill="#B8C7EE">lex.uz</text>
+        <text x="90" y="138" font-size="11" font-weight="400" fill="#63769F">robots.txt · 20 s</text>
+      </g>
+      <g class="node n2">
+        <circle cx="218" cy="104" r="13" fill="#111B38" stroke="#4B6BFF" stroke-width="2"/>
+        <circle cx="218" cy="104" r="4.5" fill="#4B6BFF"/>
+        <text x="218" y="80" fill="#B8C7EE">discover</text>
+        <text x="218" y="138" font-size="11" font-weight="400" fill="#63769F">1 283 hujjat</text>
+      </g>
+      <g class="node n3">
+        <circle cx="346" cy="104" r="13" fill="#111B38" stroke="#20B8E0" stroke-width="2"/>
+        <circle cx="346" cy="104" r="4.5" fill="#20B8E0"/>
+        <text x="346" y="80" fill="#B8C7EE">fetch</text>
+        <text x="346" y="138" font-size="11" font-weight="400" fill="#63769F">raw/*.html</text>
+      </g>
+      <g class="node n4">
+        <circle cx="474" cy="104" r="13" fill="#111B38" stroke="#22D3EE" stroke-width="2"/>
+        <circle cx="474" cy="104" r="4.5" fill="#22D3EE"/>
+        <text x="474" y="80" fill="#B8C7EE">extract</text>
+        <text x="474" y="138" font-size="11" font-weight="400" fill="#63769F">markdown/*.md</text>
+      </g>
+      <g class="node n5">
+        <circle cx="602" cy="104" r="13" fill="#111B38" stroke="#34D399" stroke-width="2"/>
+        <circle cx="602" cy="104" r="4.5" fill="#34D399"/>
+        <text x="602" y="80" fill="#B8C7EE">chunk</text>
+        <text x="602" y="138" font-size="11" font-weight="400" fill="#63769F">22 513 modda</text>
+      </g>
+      <g class="node n6">
+        <circle cx="730" cy="104" r="13" fill="#111B38" stroke="#4ADE80" stroke-width="2"/>
+        <circle cx="730" cy="104" r="4.5" fill="#4ADE80"/>
+        <text x="730" y="80" fill="#B8C7EE">index</text>
+        <text x="730" y="138" font-size="11" font-weight="400" fill="#63769F">dense + sparse</text>
+      </g>
+    </g>
+
+    <g class="dot">
+      <circle cx="90" cy="104" r="7" fill="#8AE6FF" filter="url(#p-glow)"/>
+      <circle cx="90" cy="104" r="3.4" fill="#ffffff"/>
+    </g>
+
+    <g class="f" font-size="12" font-weight="700">
+      <rect x="790" y="88" width="74" height="32" rx="16" fill="#101B33" stroke="#2B3A66"/>
+      <text x="827" y="108" fill="#9FB6E8" text-anchor="middle">Qdrant</text>
+    </g>
+    <line x1="748" y1="104" x2="786" y2="104" stroke="#2B3A66" stroke-width="2" stroke-dasharray="3 4"/>
+  </g>
+</svg>
