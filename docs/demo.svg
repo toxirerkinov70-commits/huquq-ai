@@ -113,6 +113,12 @@
       <!-- pipeline strip -->
       <g class="f" font-size="12" font-weight="600">
         <line x1="60" y1="145" x2="742" y2="145" stroke="#1E2A50" stroke-width="2"/>
+        <g class="spark" filter="url(#d-glow)">
+          <circle cx="60" cy="145" r="6" fill="#7DD3FC"/>
+        </g>
+        <g class="spark">
+          <circle cx="60" cy="145" r="3.2" fill="#ffffff"/>
+        </g>
         <g class="pill p1">
           <rect x="40" y="128" width="150" height="34" rx="17" fill="#141F45" stroke="#3B5BFD"/>
           <text x="115" y="150" fill="#B9C8F2" text-anchor="middle">modda detektori</text>
@@ -132,12 +138,6 @@
         <g class="pill p5">
           <rect x="592" y="128" width="150" height="34" rx="17" fill="#141F45" stroke="#A78BFA"/>
           <text x="667" y="150" fill="#B9C8F2" text-anchor="middle">rerank → top-4</text>
-        </g>
-        <g class="spark" filter="url(#d-glow)">
-          <circle cx="60" cy="145" r="6" fill="#7DD3FC"/>
-        </g>
-        <g class="spark">
-          <circle cx="60" cy="145" r="3.2" fill="#ffffff"/>
         </g>
       </g>
 

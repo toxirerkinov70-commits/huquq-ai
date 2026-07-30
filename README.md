@@ -2,7 +2,7 @@
 
 <img src="docs/hero.svg" alt="Huquq AI — O'zbekiston qonunchiligi bo'yicha hybrid-RAG tizimi" width="100%">
 
-<br><br>
+<br>
 
 **Oddiy tilda savol bering — tizim amaldagi qonun moddasini topadi, uni tushuntiradi
 va har doim manba ko'rsatadi:** hujjat nomi, modda raqami va lex.uz havolasi.
