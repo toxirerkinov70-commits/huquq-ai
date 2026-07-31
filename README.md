@@ -71,7 +71,7 @@ tarixi, hujjat yuklash, manbani bosganda modda to'liq matni modal'da ochiladi.
 | [3. Arxitektura](#3-arxitektura) | [9. Agent rejimlari](#9-agent-rejimlari) | [15. Muhandislik qarorlari](#15-muhandislik-qarorlari) |
 | [4. Nega gibrid qidiruv](#4-nega-gibrid-qidiruv) | [10. Agentik rejim](#10-agentik-rejim--tool-calling) | [16. Repozitoriy xaritasi](#16-repozitoriy-xaritasi) |
 | [5. Korpus](#5-korpus) | [11. Avtomatik yangilanish](#11-avtomatik-yangilanish) | [17. Kamchiliklar](#17-kamchiliklar) |
-| [6. Ma'lumot quvuri](#6-malumot-quvuri) | [12. API](#12-api) | |
+| [6. Ma'lumot quvuri](#6-malumot-quvuri) | [12. API](#12-api) | [18. Hissa qo'shganlar](#18-hissa-qoshganlar) |
 
 ---
 
@@ -834,6 +834,37 @@ Tizimning zaif joylari va ularning sabablari alohida faylda ochiq yozilgan:
 Qisqacha: dense tomon jadvalli moddalarda ko'r, so'zlashuv tilidan huquqiy atamaga
 o'tish bo'shlig'i bor, bitta savolda ikkita modda raqami bo'lsa ikkinchisi yo'qoladi,
 LLM bepul tarifi kuniga ~120 so'rov bilan cheklangan.
+
+---
+
+## 18. Hissa qo'shganlar
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="200">
+<a href="https://github.com/toxirerkinov70-commits">
+<img src="https://avatars.githubusercontent.com/u/266365723?v=4" width="92" alt="Toxir Erkinov">
+<br>
+<sub><b>Toxir Erkinov</b></sub>
+</a>
+<br>
+<sub>muallif</sub>
+</td>
+<td align="center" width="200">
+<a href="https://github.com/UmirzakovD">
+<img src="https://avatars.githubusercontent.com/u/252741283?v=4" width="92" alt="Умирзаков Диор">
+<br>
+<sub><b>Умирзаков Диор</b></sub>
+</a>
+<br>
+<sub>hissa qo'shgan</sub>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 
