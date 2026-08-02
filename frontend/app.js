@@ -118,6 +118,9 @@ const STRINGS = {
     version: "Versiya",
     choosePlan: "Tanlash",
     checkout: "rasmiylashtirish",
+    demoBilling:
+      "Tariflar namoyish uchun: to'lov tizimi ulanmagan, hech qanday pul yechilmaydi. " +
+      "Buyurtma oqimi to'liq ishlaydi va hisobni operator qo'lda faollashtiradi.",
     chooseTerm: "Muddatni tanlang",
     choosePayment: "To'lov usuli",
     comingSoon: "tez orada",
@@ -225,6 +228,9 @@ const STRINGS = {
     version: "Версия",
     choosePlan: "Выбрать",
     checkout: "оформление",
+    demoBilling:
+      "Тарифы показаны для демонстрации: платёжная система не подключена, деньги не " +
+      "списываются. Оформление заказа работает полностью, счёт активирует оператор.",
     chooseTerm: "Выберите срок",
     choosePayment: "Способ оплаты",
     comingSoon: "скоро",
@@ -460,6 +466,8 @@ async function renderPlanPane() {
 
   pane.appendChild(el("h3", null, t("setPlan")));
   pane.appendChild(el("p", "pane-sub", t("planSub")));
+  // no payment provider is connected, and a price shown without saying so is a lie
+  pane.appendChild(el("p", "demo-note", t("demoBilling")));
 
   const planValue = el("div", "set-value", data.plan.name);
   pane.appendChild(settingsRow(t("currentPlan"), planValue, data.plan.tagline));
@@ -731,6 +739,7 @@ function renderCheckout() {
   const body = $("checkout-body");
   body.innerHTML = "";
 
+  body.appendChild(el("p", "demo-note", t("demoBilling")));
   body.appendChild(el("div", "set-label", t("chooseTerm")));
   const terms = el("div", "term-list");
   checkout.quote.options.forEach((option) => {
