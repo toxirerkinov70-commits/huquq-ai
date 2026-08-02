@@ -144,20 +144,26 @@ def main() -> int:
         level=settings.log_level, format="%(asctime)s %(levelname)s %(name)s %(message)s"
     )
     sqlite.init_db()
-    scheduler = build_scheduler()
-    scheduler.start()
-    logger.info(
-        "scheduler process started: %s",
-        ", ".join(f"{job.id} {job.next_run_time}" for job in scheduler.get_jobs()),
-    )
 
-    loop = asyncio.get_event_loop()
+    async def run() -> None:
+        # AsyncIOScheduler attaches to whichever loop is running when start() is called,
+        # so it has to be started from inside one. Started outside, it raises "no running
+        # event loop" and the container restarts forever without a single job ever firing.
+        scheduler = build_scheduler()
+        scheduler.start()
+        logger.info(
+            "scheduler process started: %s",
+            ", ".join(f"{job.id} {job.next_run_time}" for job in scheduler.get_jobs()),
+        )
+        try:
+            await asyncio.Event().wait()  # until the container is stopped
+        finally:
+            scheduler.shutdown(wait=False)
+
     try:
-        loop.run_forever()
+        asyncio.run(run())
     except (KeyboardInterrupt, SystemExit):
         logger.info("scheduler process stopping")
-    finally:
-        scheduler.shutdown(wait=False)
     return 0
 
 
