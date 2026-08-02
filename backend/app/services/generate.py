@@ -115,6 +115,22 @@ yoki sening imkoniyatlaring haqida savol). Qisqa va lo'nda javob ber:
 Manba ko'rsatma, huquqiy norma keltirma, o'zingdan qonun o'ylab topma.
 Foydalanuvchi tilida javob ber (o'zbek yoki rus)."""
 
+# A question about the weather is not a failure of the search — it is a question for
+# somebody else. Saying "bazada norma topilmadi" to it is technically true and reads as
+# a broken assistant, so it gets a plain answer instead of a search result.
+OFF_TOPIC_PROMPT = f"""Sen Huquq AI — O'zbekiston Respublikasi qonunchiligi bo'yicha yordamchisan.
+
+{CAPABILITIES}
+
+Foydalanuvchi huquqqa aloqasi yo'q narsani so'radi (ob-havo, sport, dasturlash va h.k.).
+Javob shunday bo'lsin:
+- Bir jumlada samimiy ayt: bu mavzu sening sohangdan tashqarida.
+- Uzr so'rab cho'zma, ma'ruza o'qima, ta'na qilma.
+- Keyin bir jumlada nima bilan yordam bera olishingni ayt va shu foydalanuvchiga
+  yaqin bo'lishi mumkin bo'lgan bitta aniq savol namunasini taklif qil.
+Qonun moddasi keltirma, manba ko'rsatma.
+Foydalanuvchi tilida javob ber (o'zbek yoki rus)."""
+
 CONTEXT_TEMPLATE = """[{index}] {doc_title}, {article}-modda. {title}
 {text}"""
 
@@ -241,19 +257,33 @@ def _conversational_prompt(question: str, history: list[dict] | None) -> str:
     return f"Xabar: {question}"
 
 
+def _chat_system(off_topic: bool) -> str:
+    return OFF_TOPIC_PROMPT if off_topic else CONVERSATIONAL_PROMPT
+
+
 async def conversational_answer(
-    question: str, llm: LLMClient, history: list[dict] | None = None
+    question: str,
+    llm: LLMClient,
+    history: list[dict] | None = None,
+    off_topic: bool = False,
 ) -> str:
     return await llm.generate(
-        _conversational_prompt(question, history), system=CONVERSATIONAL_PROMPT, temperature=0.6
+        _conversational_prompt(question, history),
+        system=_chat_system(off_topic),
+        temperature=0.6,
     )
 
 
 async def stream_conversational(
-    question: str, llm: LLMClient, history: list[dict] | None = None
+    question: str,
+    llm: LLMClient,
+    history: list[dict] | None = None,
+    off_topic: bool = False,
 ) -> AsyncIterator[str]:
     async for piece in llm.stream(
-        _conversational_prompt(question, history), system=CONVERSATIONAL_PROMPT, temperature=0.6
+        _conversational_prompt(question, history),
+        system=_chat_system(off_topic),
+        temperature=0.6,
     ):
         yield piece
 

@@ -18,7 +18,7 @@ from ..models import (
 )
 from ..services import agentic
 from ..services import agents as agents_service
-from ..services import aliases, auth, selfinfo, usage
+from ..services import aliases, auth, intent, selfinfo, usage
 from ..services import attachments as attachments_service
 from ..services import generate as generate_service
 from ..services.auth import Principal
@@ -95,7 +95,11 @@ def _attachment_bytes(payload: ChatRequest) -> int:
 
 
 def _authorise(payload: ChatRequest, principal: Principal, agentic_mode: bool) -> None:
-    """Everything the plan has to permit before any paid work starts."""
+    """Everything the plan has to permit before any work starts.
+
+    The daily allowance is not charged here: what a message costs depends on what it
+    turns out to be, and that is only known after it has been classified.
+    """
     # the offer is a condition of use, so it is enforced where use happens rather than
     # only on the screen that shows the checkbox
     if principal.user.get("terms_version") != settings.terms_version:
@@ -110,20 +114,27 @@ def _authorise(payload: ChatRequest, principal: Principal, agentic_mode: bool) -
         usage.check_attachment(principal.plan, _attachment_bytes(payload))
     if agentic_mode:
         usage.check_agentic(principal.plan)
-    conversational = payload.attachment is None and (
-        _is_about_account(payload) or generate_service.is_conversational(payload.question)
-    )
-    if conversational:
+
+
+# saying hello, or being told the assistant cannot discuss football, is not a legal
+# question and does not come out of the daily allowance
+FREE_INTENTS = {intent.CONVERSATION, intent.ACCOUNT, intent.OFF_TOPIC}
+
+
+def _charge(principal: Principal, label: str) -> None:
+    if label in FREE_INTENTS:
         usage.check_conversational(principal.id, principal.plan)
     else:
         usage.check_quota(principal.id, principal.plan)
 
 
-def _kind(payload: ChatRequest, agentic_mode: bool) -> str:
+def _kind(label: str, payload: ChatRequest, agentic_mode: bool) -> str:
     if payload.attachment is not None:
         return "attachment"
-    if _is_about_account(payload) or generate_service.is_conversational(payload.question):
+    if label in FREE_INTENTS:
         return "conversational"
+    if label == intent.DRAFT:
+        return "draft"
     return "agentic" if agentic_mode else "question"
 
 
@@ -145,10 +156,6 @@ def _failure_message(exc: Exception) -> str:
     return FAILURE_MESSAGES.get(
         reason, "Javob olishda xatolik yuz berdi. Qaytadan urinib ko'ring."
     )
-
-
-def _is_about_account(payload: ChatRequest) -> bool:
-    return payload.attachment is None and selfinfo.is_account_question(payload.question)
 
 
 def _account_reply(payload: ChatRequest, principal: Principal) -> str:
@@ -261,20 +268,25 @@ async def chat_agentic(
     llm = request.app.state.llm
     agent = agents_service.get_agent(payload.agent)
     session_id = sqlite.ensure_session(payload.session_id, principal.id, agent.key)
-    meter = usage.new_meter(principal.id, "/api/chat/agentic", _kind(payload, True), session_id)
+    meter = usage.new_meter(principal.id, "/api/chat/agentic", "agentic", session_id)
+    label = await intent.classify(payload.question, llm, payload.attachment is not None)
+    meter.kind = _kind(label, payload, True)
+    _charge(principal, label)
     history = sqlite.get_history(session_id)
     sqlite.add_message(session_id, "user", _user_text(payload))
 
     try:
         # neither a greeting nor a question about one's own plan needs the tool loop
-        if _is_about_account(payload):
+        if label == intent.ACCOUNT:
             answer = _account_reply(payload, principal)
             sqlite.add_message(session_id, "assistant", answer)
             return ChatResponse(
                 answer=answer, sources=[], used_agent=agent.key, session_id=session_id
             )
-        if payload.attachment is None and generate_service.is_conversational(payload.question):
-            answer = await generate_service.conversational_answer(payload.question, llm, history)
+        if label in (intent.CONVERSATION, intent.OFF_TOPIC):
+            answer = await generate_service.conversational_answer(
+                payload.question, llm, history, off_topic=label == intent.OFF_TOPIC
+            )
             sqlite.add_message(session_id, "assistant", answer)
             return ChatResponse(
                 answer=answer, sources=[], used_agent=agent.key, session_id=session_id
@@ -332,14 +344,19 @@ async def chat(
     llm = request.app.state.llm
     agent = agents_service.get_agent(payload.agent)
     session_id = sqlite.ensure_session(payload.session_id, principal.id, agent.key)
-    meter = usage.new_meter(principal.id, "/api/chat", _kind(payload, False), session_id)
+    # the meter opens before the message is classified so the classifier's own tokens
+    # land on this request rather than on nobody
+    meter = usage.new_meter(principal.id, "/api/chat", "question", session_id)
+    label = await intent.classify(payload.question, llm, payload.attachment is not None)
+    meter.kind = _kind(label, payload, False)
+    _charge(principal, label)
     history = sqlite.get_history(session_id)
     request_id = getattr(request.state, "request_id", None)
 
     # "mening tarifim" is a question about this account, not about the Labour Code's
     # article on wage tariffs. It is answered from what is already known, so it costs
     # neither a model call nor a question from the daily allowance.
-    if _is_about_account(payload):
+    if label == intent.ACCOUNT:
         answer = _account_reply(payload, principal)
         sqlite.add_message(session_id, "user", _user_text(payload))
         sqlite.add_message(session_id, "assistant", answer)
@@ -361,9 +378,8 @@ async def chat(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
-    conversational = payload.attachment is None and generate_service.is_conversational(
-        payload.question
-    )
+    conversational = label in (intent.CONVERSATION, intent.OFF_TOPIC)
+    off_topic = label == intent.OFF_TOPIC
 
     attachment_block = None
     extra_parts = None
@@ -387,7 +403,7 @@ async def chat(
         try:
             if conversational:
                 answer = await generate_service.conversational_answer(
-                    payload.question, llm, history
+                    payload.question, llm, history, off_topic=off_topic
                 )
                 sources = []
             else:
@@ -424,7 +440,9 @@ async def chat(
         yield _sse("meta", {"session_id": session_id, "used_agent": agent.key})
         try:
             if conversational:
-                pieces = generate_service.stream_conversational(payload.question, llm, history)
+                pieces = generate_service.stream_conversational(
+                    payload.question, llm, history, off_topic=off_topic
+                )
             else:
                 pieces = generate_service.stream_answer(
                     payload.question, hits, llm, history, agent.prompt,

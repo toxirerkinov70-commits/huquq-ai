@@ -186,11 +186,15 @@ class LocalEmbeddingClient:
         self.model = model_name or settings.local_embed_model
         self.dim = dim or settings.embed_dim
         self._model = None
-        # a single lock made every question queue behind every other one: on CPU an
-        # encode takes a few hundred milliseconds, so ten simultaneous users meant the
-        # last of them waited seconds before their search even started. torch releases
-        # the GIL during encoding, so a small pool is real parallelism
+        # The semaphore bounds how many requests may be waiting on the model; the lock
+        # is what actually protects it. Letting two threads into model.encode looked
+        # like parallelism — torch does release the GIL for the matmul — but the
+        # tokenizer underneath is Rust and not re-entrant, so the second thread died
+        # with "Already borrowed" and took the answer with it. It surfaced on exactly
+        # the questions that matter most: a described situation fans out into several
+        # searches at once.
         self._gate = asyncio.Semaphore(max(1, concurrency or settings.embed_concurrency))
+        self._encode_lock = threading.Lock()
         self._load_lock = threading.Lock()
         self.request_count = 0
 
@@ -228,12 +232,13 @@ class LocalEmbeddingClient:
     def _encode(self, texts: list[str], task_type: str) -> list[list[float]]:
         model = self._load()
         prefix = self._prefix(task_type)
-        vectors = model.encode(
-            [prefix + text for text in texts],
-            batch_size=8,
-            normalize_embeddings=True,
-            show_progress_bar=False,
-        )
+        with self._encode_lock:
+            vectors = model.encode(
+                [prefix + text for text in texts],
+                batch_size=8,
+                normalize_embeddings=True,
+                show_progress_bar=False,
+            )
         return [vector.tolist() for vector in vectors]
 
     async def embed(self, texts: list[str], task_type: str) -> list[list[float]]:
