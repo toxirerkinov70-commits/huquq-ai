@@ -1589,6 +1589,7 @@ async function askAgentic(question, attachment, wrap, bubble, typing) {
   state.sessionId = data.session_id;
   localStorage.setItem(SESSION_KEY, data.session_id);
   bubble.innerHTML = renderMarkdown(stripDisclaimer(data.answer || t("answerFailed")));
+  if (data.document) wrap.appendChild(window.HuquqDraft.preview(data.document));
   renderSources(wrap, data.sources);
   wrap.appendChild(disclaimerBlock());
   loadAccount();
@@ -1636,6 +1637,10 @@ async function askStreaming(question, attachment, wrap, bubble, typing) {
         if (typing.isConnected) typing.remove();
         answer += payload.text;
         bubble.innerHTML = renderMarkdown(answer);
+        scrollDown();
+      } else if (eventMatch[1] === "document") {
+        if (typing.isConnected) typing.remove();
+        wrap.appendChild(window.HuquqDraft.preview(payload.document));
         scrollDown();
       } else if (eventMatch[1] === "sources") {
         renderSources(wrap, payload.sources);

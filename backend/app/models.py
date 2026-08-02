@@ -30,6 +30,10 @@ class ChatResponse(BaseModel):
     sources: list[Source] = []
     used_agent: str = "umumiy"
     session_id: str | None = None
+    # a drafted letter or set of slides, when that is what was asked for; the shape is
+    # the drafting service's own, so it stays a plain dict rather than a second model
+    # that would have to be kept in step with it
+    document: dict | None = None
 
 
 class SessionSummary(BaseModel):

@@ -20,6 +20,7 @@ from ..services import agentic
 from ..services import agents as agents_service
 from ..services import aliases, auth, intent, selfinfo, usage
 from ..services import attachments as attachments_service
+from ..services import drafting
 from ..services import generate as generate_service
 from ..services.auth import Principal
 from ..services.query import is_situation, looks_russian
@@ -33,6 +34,32 @@ router = APIRouter(prefix="/api", tags=["chat"])
 CANDIDATE_K = 20
 # a companion search backs one idea, so it contributes its best couple of articles
 FACET_K = 2
+# a drafted document cites its grounds inside itself; the list under the chat is there
+# to let the person verify them, not to repeat the whole retrieval
+DRAFT_SOURCES = 6
+
+
+async def _nothing() -> AsyncIterator[str]:
+    """A stream with nothing left to send, for answers produced in one piece."""
+    return
+    yield  # pragma: no cover — makes this a generator
+
+
+async def _draft(
+    payload: ChatRequest,
+    hits: list,
+    llm,
+    history: list[dict] | None,
+) -> dict | None:
+    """Draft the document, or return None so the normal answer path takes over.
+
+    A drafting failure should cost the person their document, not their answer.
+    """
+    try:
+        return await drafting.draft(payload.question, hits, llm, history)
+    except Exception as exc:  # noqa: BLE001 — falling back is the whole point
+        logger.warning("drafting failed, answering normally", error=str(exc))
+        return None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -380,6 +407,7 @@ async def chat(
 
     conversational = label in (intent.CONVERSATION, intent.OFF_TOPIC)
     off_topic = label == intent.OFF_TOPIC
+    drafting_mode = label == intent.DRAFT
 
     attachment_block = None
     extra_parts = None
@@ -398,6 +426,7 @@ async def chat(
 
     sources = generate_service.build_sources(hits)
     sqlite.add_message(session_id, "user", _user_text(payload))
+    document: dict | None = None
 
     if not payload.stream:
         try:
@@ -406,6 +435,9 @@ async def chat(
                     payload.question, llm, history, off_topic=off_topic
                 )
                 sources = []
+            elif drafting_mode and (document := await _draft(payload, hits, llm, history)):
+                answer = drafting.summary_line(document)
+                sources = sources[:DRAFT_SOURCES]
             else:
                 answer = await generate_service.generate_answer(
                     payload.question, hits, llm, history, agent.prompt,
@@ -426,7 +458,11 @@ async def chat(
                 cost_usd=meter.cost_usd,
             )
             return ChatResponse(
-                answer=answer, sources=sources, used_agent=agent.key, session_id=session_id
+                answer=answer,
+                sources=sources,
+                used_agent=agent.key,
+                session_id=session_id,
+                document=document,
             )
         finally:
             usage.flush(meter, session_id)
@@ -438,8 +474,17 @@ async def chat(
         collected: list[str] = []
         final_sources: list[dict] = []
         yield _sse("meta", {"session_id": session_id, "used_agent": agent.key})
+        drafted: dict | None = None
         try:
-            if conversational:
+            if drafting_mode and (drafted := await _draft(payload, llm=llm, hits=hits, history=history)):
+                # a document arrives as one JSON object, so there is nothing to stream:
+                # the sentence goes out in one piece and the draft follows it
+                text = drafting.summary_line(drafted)
+                collected.append(text)
+                yield _sse("token", {"text": text})
+                yield _sse("document", {"document": drafted})
+                pieces = _nothing()
+            elif conversational:
                 pieces = generate_service.stream_conversational(
                     payload.question, llm, history, off_topic=off_topic
                 )
@@ -459,7 +504,11 @@ async def chat(
             yield _sse("error", {"message": _failure_message(exc), "request_id": request_id})
         else:
             answer_text = "".join(collected)
-            if not conversational and generate_service.answer_is_grounded(answer_text):
+            if drafted is not None:
+                # the draft rests on the articles it was built from, not on words the
+                # summary sentence happens to repeat
+                final_sources = sources[:DRAFT_SOURCES]
+            elif not conversational and generate_service.answer_is_grounded(answer_text):
                 final_sources = generate_service.filter_cited_sources(answer_text, sources)
             yield _sse("sources", {"sources": final_sources})
         finally:
