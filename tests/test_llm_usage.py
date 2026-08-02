@@ -1,8 +1,9 @@
 """How a streamed answer is charged.
 
 The counts inside ``usageMetadata`` are cumulative and repeated on every chunk, so
-summing them charges one answer many times over. This was measured at roughly ten times
-the real cost before the fix, which would have made every price in MONETIZATSIYA.md wrong.
+summing them charges one answer many times over. Before the fix a single answer reported
+roughly ten times its real token count, which put every cost figure out by an order of
+magnitude.
 """
 
 import asyncio

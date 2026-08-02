@@ -268,8 +268,8 @@ const Huquq = (() => {
 
   // Google's own rendered button is deliberately not used. For this client Google
   // answers the button endpoint with 403 ("origin is not allowed") while accepting the
-  // popup flow below from the very same origin — see KAMCHILIKLAR.md 3.9. So our button
-  // opens the popup directly and the backend gets an access token instead of an ID one.
+  // popup flow below from the very same origin, and no console setting changes it. So
+  // our button opens the popup and the backend gets an access token instead of an ID one.
   function loadGoogle() {
     if (!state.config.google_enabled || flow.googleReady) return;
     flow.googleReady = true;

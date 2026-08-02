@@ -4,8 +4,10 @@ Two kinds of token arrive here, because Google offers two browser flows and only
 them works for this client.
 
 An *ID token* comes from the rendered Sign in with Google button. An *access token*
-comes from the popup flow (`google.accounts.oauth2.initTokenClient`), which the frontend
-falls back to when Google refuses to render that button — see KAMCHILIKLAR.md 3.9.
+comes from the popup flow (`google.accounts.oauth2.initTokenClient`). The popup is what
+this client actually uses: Google answers the rendered button's endpoint with 403 for it
+while accepting the very same origin through the popup, and no setting in the console
+changes that.
 
 Either way the token is worth exactly nothing until it has been checked, and the check
 that matters is the same in both cases: the token must have been issued *for this
