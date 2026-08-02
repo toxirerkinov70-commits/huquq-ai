@@ -22,6 +22,11 @@
   --overlay: rgba(15, 23, 41, .38);
   --radius: 14px;
   --shadow: 0 1px 3px rgba(15, 23, 41, .07), 0 4px 16px rgba(15, 23, 41, .05);
+
+  /* brand: the mark's own palette, kept apart from the interface accent so a theme
+     change never restyles the logo. Values come from the identity kit. */
+  --brand-ink: #201E1D;
+  --brand-accent: #0088B0;
 }
 
 :root[data-theme="dark"] {
@@ -43,7 +48,23 @@
   --scroll-thumb-hover: #454c5c;
   --overlay: rgba(0, 0, 0, .6);
   --shadow: 0 1px 3px rgba(0, 0, 0, .4);
+  --brand-ink: #F3F2F2;
+  --brand-accent: #62C5EE;
 }
+
+/* The mark: a bracketed article with its lines, one of them picked out in the accent.
+   Drawn inline rather than loaded as an image so it can follow the theme, and left
+   without shadow, gradient or rotation — the identity rules forbid all three. */
+.mark { display: block; flex-shrink: 0; color: var(--brand-ink); }
+.mark .rule-accent { stroke: var(--brand-accent); }
+
+/* the wordmark is set in a serif, with AI carrying the accent */
+.wordmark {
+  font-family: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -.005em;
+}
+.wordmark .ai { color: var(--brand-accent); }
 
 * { box-sizing: border-box; }
 
@@ -99,16 +120,10 @@ body {
 }
 
 .brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px; }
-.brand-mark {
-  width: 34px; height: 34px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 6px rgba(37, 99, 235, .28));
-}
+.brand-mark { width: 30px; height: 30px; }
 .brand-name {
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 19px;
   color: var(--sidebar-text);
-  letter-spacing: .01em;
 }
 
 .new-chat {

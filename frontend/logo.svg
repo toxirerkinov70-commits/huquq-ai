@@ -1,53 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Huquq AI">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Huquq AI">
   <title>Huquq AI</title>
-  <!--
-    A shield because the product is about law, drawn flat-topped and softly cornered
-    rather than as a medieval crest — the peaked heraldic shape read as a badge, not as
-    software.
-
-    Everything that survived is load-bearing at 24px, which is the smallest size the mark
-    is used at: one beam, one post, two pans. The sunrise, the wreath and the open book of
-    the earlier mark all collapsed into noise at that size. The gold is spent only on the
-    pans and the rim, so the eye lands on the balance first.
-  -->
-  <defs>
-    <linearGradient id="hqField" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#4f8bff"/>
-      <stop offset="0.45" stop-color="#1d43c4"/>
-      <stop offset="1" stop-color="#0b1a4d"/>
-    </linearGradient>
-    <linearGradient id="hqGold" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0" stop-color="#ffe89a"/>
-      <stop offset="0.5" stop-color="#f7b733"/>
-      <stop offset="1" stop-color="#d98410"/>
-    </linearGradient>
-    <linearGradient id="hqSheen" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
-      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-
-  <path id="hqShield"
-        d="M23 13h50a6 6 0 0 1 6 6v28.5c0 18.4-12.3 31.6-29.4 40.2a3.6 3.6 0 0 1-3.2 0
-           C29.3 79.1 17 65.9 17 47.5V19a6 6 0 0 1 6-6z"
-        fill="url(#hqField)"/>
-  <use href="#hqShield" fill="url(#hqSheen)"/>
-
-  <!-- inner rim: keeps the silhouette readable on a light background too -->
-  <path d="M24.5 17.5h47a3 3 0 0 1 3 3v26.9c0 16.2-11 28.2-26.5 36
-           -15.5-7.8-26.5-19.8-26.5-36V20.5a3 3 0 0 1 3-3z"
-        fill="none" stroke="url(#hqGold)" stroke-width="1.3" opacity="0.55"/>
-
-  <!-- the balance: beam, post and base in white, pans in gold -->
-  <g stroke="#f7fafc" stroke-width="4" stroke-linecap="round" fill="none">
-    <path d="M48 32.5V68.5"/>
-    <path d="M30 39.5h36"/>
-    <path d="M35 68.5h26"/>
+  <!-- The mark from the identity kit: an article of law between its brackets, its lines
+       reduced to two, the second one carrying the accent. The interface draws this inline
+       so it can follow the theme; this file is the standalone asset, ink on transparent,
+       for light backgrounds. On a dark one use #F3F2F2 with the #62C5EE accent. -->
+  <g fill="none" stroke="#201E1D" stroke-width="5.5" stroke-linejoin="miter">
+    <path d="M20 8H8v48h12"/>
+    <path d="M44 8h12v48H44"/>
+    <path d="M22 26h20"/>
   </g>
-  <g stroke="#dce6fb" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.9">
-    <path d="M30 39.5 23.5 47.5M30 39.5 36.5 47.5M66 39.5 59.5 47.5M66 39.5 72.5 47.5"/>
-  </g>
-  <path d="M22.5 47.5h15a7.5 7.5 0 0 1-15 0zM58.5 47.5h15a7.5 7.5 0 0 1-15 0z"
-        fill="url(#hqGold)"/>
-  <circle cx="48" cy="29.5" r="3.4" fill="url(#hqGold)"/>
+  <path d="M22 39h13" fill="none" stroke="#0088B0" stroke-width="5.5"/>
 </svg>

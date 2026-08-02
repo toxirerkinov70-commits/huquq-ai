@@ -1,24 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Huquq AI">
-  <!-- The same mark, thickened for 16px: at that size the chains and the rim of the full
-       logo turn to grey mush, so only the shield, the beam, the post and the pans stay. -->
-  <defs>
-    <linearGradient id="fvField" x1="0.15" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#4f8bff"/>
-      <stop offset="0.45" stop-color="#1d43c4"/>
-      <stop offset="1" stop-color="#0b1a4d"/>
-    </linearGradient>
-    <linearGradient id="fvGold" x1="0" y1="0" x2="0.6" y2="1">
-      <stop offset="0" stop-color="#ffe89a"/>
-      <stop offset="1" stop-color="#e39412"/>
-    </linearGradient>
-  </defs>
-  <path d="M20 9h56a7 7 0 0 1 7 7v32c0 20.5-13.6 35.2-33.2 44.6a4 4 0 0 1-3.6 0
-           C26.6 83.2 13 68.5 13 48V16a7 7 0 0 1 7-7z" fill="url(#fvField)"/>
-  <g stroke="#f7fafc" stroke-width="6" stroke-linecap="round" fill="none">
-    <path d="M48 29v42"/>
-    <path d="M26 37h44"/>
-    <path d="M34 71h28"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Huquq AI">
+  <!-- A tab strip can be light or dark, so the favicon carries its own field rather than
+       relying on the browser's: the kit's ink as the tile, paper for the brackets. The
+       strokes are heavier than in the full mark because at 16px the drawn weight is what
+       survives, not the drawing. -->
+  <rect width="64" height="64" rx="12" fill="#201E1D"/>
+  <g fill="none" stroke="#F3F2F2" stroke-width="6" stroke-linejoin="miter">
+    <path d="M22 14H14v36h8"/>
+    <path d="M42 14h8v36h-8"/>
+    <path d="M25 28h14"/>
   </g>
-  <path d="M18 46h16a8 8 0 0 1-16 0zM62 46h16a8 8 0 0 1-16 0z" fill="url(#fvGold)"/>
-  <circle cx="48" cy="26" r="4.5" fill="url(#fvGold)"/>
+  <path d="M25 39h9" fill="none" stroke="#62C5EE" stroke-width="6"/>
 </svg>

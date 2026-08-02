@@ -95,11 +95,14 @@
     <rect width="1200" height="340" fill="url(#h-dots)"/>
     <rect x="0.75" y="0.75" width="1198.5" height="338.5" rx="21" fill="none" stroke="#2C3A66" stroke-width="1.5"/>
 
-    <!-- logo -->
-    <g>
-      <rect x="56" y="66" width="70" height="70" rx="20" fill="url(#h-logo)"/>
-      <rect x="56" y="66" width="70" height="70" rx="20" fill="none" stroke="#A9BBFF" stroke-opacity=".45"/>
-      <text class="f" x="91" y="113" font-size="42" font-weight="700" fill="#fff" text-anchor="middle">§</text>
+    <!-- logo: the identity mark, drawn for a dark field -->
+    <g transform="translate(56 66) scale(1.094)">
+      <g fill="none" stroke="#F3F2F2" stroke-width="5.5" stroke-linejoin="miter">
+        <path d="M20 8H8v48h12"/>
+        <path d="M44 8h12v48H44"/>
+        <path d="M22 26h20"/>
+      </g>
+      <path d="M22 39h13" fill="none" stroke="#62C5EE" stroke-width="5.5"/>
     </g>
 
     <!-- title -->

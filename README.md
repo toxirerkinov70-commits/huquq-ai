@@ -59,6 +59,21 @@ prompt'da emas:
 Vanilla JS, build qadamisiz, 813 qator: SSE streaming, yorug'/qorong'i tema, suhbat
 tarixi, hujjat yuklash, manbani bosganda modda to'liq matni modal'da ochiladi.
 
+### Brend
+
+<img src="frontend/logo.svg" alt="Huquq AI belgisi" width="52" align="left" hspace="14" vspace="4">
+
+Belgi — qavslar orasidagi modda va uning ikki qatori, ikkinchisi urg'u rangida.
+Siyoh `#201E1D`, qog'oz `#F3F2F2`, urg'u `#0088B0` (qorong'i fonda `#62C5EE`).
+Nom Source Serif 4 Semibold bilan teriladi, "AI" urg'u rangida.
+Interfeysda belgi rasm sifatida emas, HTML ichida chiziladi — shunda u temaga ergashadi.
+
+<br clear="left">
+
+Qoidalar: eng kichik o'lcham 20 px; belgi atrofida uning balandligining yarmiga teng
+bo'sh joy; cho'zish, soya, gradiyent va aylantirish mumkin emas; belgiga davlat gerbi
+yoki bayrog'i elementlari qo'shilmaydi.
+
 ---
 
 ## Mundarija
