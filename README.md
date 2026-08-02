@@ -65,7 +65,7 @@ tarixi, hujjat yuklash, manbani bosganda modda to'liq matni modal'da ochiladi.
 
 | | | |
 |---|---|---|
-| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Kamchiliklar](KAMCHILIKLAR.md) |
+| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Kamchiliklar](KAMCHILIKLAR.md) · [Monetizatsiya](MONETIZATSIYA.md) |
 | [1. Muammo va yechim](#1-muammo-va-yechim) | [7. Qidiruv quvuri](#7-qidiruv-quvuri) | [13. O'rnatish](#13-ornatish-va-ishga-tushirish) |
 | [2. Bir qarashda](#2-bir-qarashda) | [8. Javob generatsiyasi](#8-javob-generatsiyasi) | [14. Baholash](#14-baholash) |
 | [3. Arxitektura](#3-arxitektura) | [9. Agent rejimlari](#9-agent-rejimlari) | [15. Muhandislik qarorlari](#15-muhandislik-qarorlari) |
@@ -591,25 +591,64 @@ sidebar pastida turadi.
 
 ## 12. API
 
-| Metod | Yo'l | Vazifa |
-|---|---|---|
-| `POST` | `/api/chat` | Savol → **SSE streaming** javob + manbalar |
-| `POST` | `/api/chat/agentic` | Function calling bilan javob (oqimsiz) |
-| `POST` | `/api/search` | Faqat retrieval natijasi (debug) |
-| `GET` | `/api/agents` | Agent rejimlari ro'yxati |
-| `GET` | `/api/documents` | Hujjatlar reyestri (`?group=`, `?q=`) |
-| `GET` | `/api/document/{doc_id}` | Bitta hujjat va uning moddalari |
-| `GET` | `/api/sessions` | Suhbatlar ro'yxati |
-| `GET` | `/api/sessions/{id}` | Suhbat xabarlari va manbalari |
-| `DELETE` | `/api/sessions/{id}` | Suhbatni o'chirish |
-| `GET` | `/api/updates` | So'nggi yangilanish hisobotlari |
-| `GET` | `/health` | Holat + indexdagi nuqtalar soni |
+Ochiq endpointlardan tashqari hammasi avtorizatsiya talab qiladi:
+`Authorization: Bearer <token>` yoki `X-API-Key: hq_live_...`.
 
-Himoya: `slowapi` rate limiting (60/min), strukturalangan logging, har so'rov uchun
-latency va token hisobi.
+| Metod | Yo'l | Vazifa | Kirish |
+|---|---|---|---|
+| `GET` | `/api/auth/config` | Kirish ekrani nimani taklif qilishi (Google yoqilganmi va h.k.) | ochiq |
+| `POST` | `/api/auth/phone/start` | O'zbekiston raqamiga SMS kod yuborish | ochiq |
+| `POST` | `/api/auth/phone/verify` | Kodni tekshirish, token qaytarish | ochiq |
+| `POST` | `/api/auth/google` | Google ID tokenini tekshirish | ochiq |
+| `POST` | `/api/auth/complete` | Ism va oferta qabuli — ro'yxatdan o'tishning yakuni | token |
+| `POST` | `/api/auth/anon` | Ro'yxatdan o'tmasdan sinab ko'rish | ochiq |
+| `GET` | `/api/plans/{key}/quote` | Muddat bo'yicha narxlar (1/3/6/12 oy, chegirma bilan) | token |
+| `GET` | `/api/payment-methods` | To'lov usullari va ularning holati | ochiq |
+| `POST` | `/api/orders` | Tarif buyurtmasi | token |
+| `GET` | `/api/orders` | O'z buyurtmalari | token |
+| `DELETE` | `/api/orders/{id}` | Buyurtmani bekor qilish | token · egasi |
+| `PATCH` | `/api/sessions/{id}` | Suhbatni qayta nomlash va qadash | token · egasi |
+| `POST` | `/api/admin/orders/{id}/confirm` | To'lovni tasdiqlash va tarifni faollashtirish | `X-Admin-Key` |
+| `GET` | `/api/plans` | Tariflar ro'yxati | ochiq |
+| `GET` | `/api/agents` | Agent rejimlari ro'yxati | ochiq |
+| `GET` | `/api/updates` | So'nggi yangilanish hisobotlari | ochiq |
+| `GET` | `/health` | Holat + indexdagi nuqtalar soni | ochiq |
+| `POST` | `/api/chat` | Savol → **SSE streaming** javob + manbalar | token |
+| `POST` | `/api/chat/agentic` | Function calling bilan javob (oqimsiz) | token · Pro+ |
+| `POST` | `/api/search` | Faqat retrieval natijasi (debug) | token |
+| `GET` | `/api/documents` | Hujjatlar reyestri (`?group=`, `?q=`) | token |
+| `GET` | `/api/document/{doc_id}` | Bitta hujjat va uning moddalari | token |
+| `GET` | `/api/sessions` | **O'z** suhbatlari ro'yxati | token |
+| `GET` | `/api/sessions/{id}` | Suhbat xabarlari va manbalari | token · egasi |
+| `DELETE` | `/api/sessions/{id}` | Suhbatni o'chirish | token · egasi |
+| `GET` | `/api/account` | Hisob, tarif, kvota, kalitlar | token |
+| `GET` | `/api/quota` | Kunlik chegara holati | token |
+| `GET` | `/api/usage` | Sarf tarixi va xarajat | token |
+| `POST` | `/api/account/keys` | API kalit yaratish | token · Biznes |
+| `DELETE` | `/api/account/keys/{id}` | Kalitni bekor qilish | token |
+| `DELETE` | `/api/account/data` | Barcha suhbatlarni o'chirish | token |
+| `GET` | `/api/legal/{name}` | Oferta, maxfiylik, saqlash siyosati | ochiq |
+| `GET` | `/api/admin/stats` | Foydalanuvchilar, xarajat, MRR, marja | `X-Admin-Key` |
+| `GET` | `/api/admin/users` | Hisoblar ro'yxati | `X-Admin-Key` |
+| `POST` | `/api/admin/users/plan` | Tarifni o'zgartirish | `X-Admin-Key` |
+| `POST` | `/api/admin/users/status` | Hisobni bloklash | `X-Admin-Key` |
+
+`/api/admin/*` `ADMIN_API_KEY` qo'yilmagan bo'lsa **404** qaytaradi — mavjudligini ham
+bildirmaydi.
+
+Xato javoblari tuzilgan: `{"detail": {"error": "quota_exceeded", "message": "...",
+"limit": 5, "reset_seconds": 43200}}`. Kodlar: `401` avtorizatsiya, `402` tarifga
+kirmaydigan funksiya, `413` hajm, `429` kvota yoki rate limit.
+
+Himoya: hisob bo'yicha rate limiting, so'rov hajmi chegarasi, `X-Request-ID` bilan
+strukturalangan logging, har so'rov uchun latency va **foydalanuvchi bo'yicha** token
+va xarajat hisobi.
 
 **SSE oqimi:** `meta` → `token`×N → `sources` → `done`. Manbalar oxirida bitta event
-sifatida yuboriladi, chunki ular javob matni yozilgandan **keyin** filtrlanadi.
+sifatida yuboriladi, chunki ular javob matni yozilgandan **keyin** filtrlanadi. `done`
+eventi qolgan kvotani ham olib keladi.
+
+Tariflar, chegaralar va daromad tuzilmasi: **[MONETIZATSIYA.md](MONETIZATSIYA.md)**.
 
 ---
 
@@ -618,22 +657,81 @@ sifatida yuboriladi, chunki ular javob matni yozilgandan **keyin** filtrlanadi.
 ### Tayyor korpus bilan (eng oson)
 
 ```bash
-docker compose up -d          # qdrant + backend
+cp .env.example .env
+# GEMINI_API_KEY va AUTH_SECRET ni to'ldiring:
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+
+docker compose up -d                          # qdrant + backend + scheduler
+python scripts/import_corpus.py data/releases/corpus-YYYYMMDD.tar.gz
 ```
 
 Brauzerda: **http://localhost:8000**
+
+Korpus arxivi `scripts/export_corpus.py` bilan yig'iladi. **Buni tushirib qoldirmang:**
+noldan qurish lex.uz dan ~7 soat yuklash (`Crawl-delay: 20`) va ~3 soat embedding
+degani — bu deploy qadami emas.
+
+### Production
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Caddy TLS sertifikatini o'zi oladi (`DOMAIN` ni `.env` da qo'ying), backend porti
+tashqariga chiqmaydi, uvicorn `UVICORN_WORKERS` ta worker bilan ishlaydi. Bu xavfsiz,
+chunki yangilanish jadvali alohida konteynerda — aks holda har worker o'z crawl'ini
+boshlab, lex.uz bloklardi.
+
+**Ishga tushirishdan oldin majburiy:**
+
+| # | Nima | Nega |
+|---|---|---|
+| 1 | `AUTH_SECRET` to'ldirilgan | Bo'sh bo'lsa har qayta deployda barcha tokenlar yaroqsiz bo'ladi |
+| 2 | `QDRANT_API_KEY` to'ldirilgan | Parolsiz vektor baza — butun korpusni o'chirish imkoni |
+| 3 | `ADMIN_API_KEY` to'ldirilgan | Bo'lmasa operator paneli yo'q (endpointlar 404) |
+| 4 | `CORS_ORIGINS` aniq domenlar | `*` — har qanday sayt sizning kalitingiz hisobidan so'rov yuboradi |
+| 5 | `ENVIRONMENT=production` | Ogohlantirishlar va JSON logging |
+| 6 | `docs/legal/` yurist tasdig'idan o'tgan | Huquqiy xizmat, javobgarlik cheklovi kerak |
+| 7 | `SMS_PROVIDER=eskiz` va kalitlari to'ldirilgan | `console` da kod faqat jurnalga yoziladi. Production'da tizim buni **rad etadi** — ro'yxatdan o'tish ishlamaydi |
+| 8 | `GOOGLE_CLIENT_ID` to'ldirilgan | Bo'sh bo'lsa "Google orqali kirish" tugmasi ko'rsatilmaydi |
+
+### Ro'yxatdan o'tishni sozlash
+
+**Google.** [Google Cloud Console](https://console.cloud.google.com) → *APIs & Services*
+→ *Credentials* → *Create credentials* → *OAuth client ID* → **Web application**.
+*Authorized JavaScript origins* ga sayt manzilingizni qo'shing
+(`https://sizning-domen.uz`, dev uchun `http://localhost:8000`). Olingan **Client ID**
+ni `.env` dagi `GOOGLE_CLIENT_ID` ga yozing. Client secret kerak emas.
+
+Kirish **popup oqimida** ishlaydi (`google.accounts.oauth2.initTokenClient`): brauzer
+access token oladi, backend uni Google'ning `tokeninfo` endpointida tekshiradi —
+avvalo token **aynan shu klient uchun** berilganini. Google'ning o'zi render qiladigan
+"Sign in with Google" tugmasi ishlatilmaydi, sababi [KAMCHILIKLAR.md](KAMCHILIKLAR.md)
+3.9-bandida yozilgan.
+
+**SMS.** [eskiz.uz](https://eskiz.uz) da hisob oching, `ESKIZ_EMAIL` va
+`ESKIZ_PASSWORD` ni to'ldiring, `SMS_PROVIDER=eskiz` qo'ying. Xabar shabloni
+operatorda oldindan tasdiqlanishi kerak.
+
+**Cheksiz hisob.** `OWNER_EMAILS` dagi pochta bilan Google orqali kirgan hisob
+avtomatik `owner` tarifiga o'tadi. Telefon orqali kirgan hisob uchun:
+
+```bash
+python scripts/grant_owner.py --phone 901234567
+```
 
 ### Dev muhit
 
 ```bash
 py -3.12 -m venv .venv
 .venv\Scripts\activate                 # Windows
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 cp .env.example .env                   # GEMINI_API_KEY ni to'ldiring
 docker compose up -d qdrant            # dev'da faqat Qdrant konteynerda
 
 uvicorn backend.app.main:app --reload
+pytest                                 # 72 ta test
 ```
 
 Windows uchun tayyor skript: `.\start.ps1` — port bandligini, Qdrant holatini va
@@ -663,18 +761,21 @@ Bular tajribada olingan — buzilsa ish qaytadan bajarilishi kerak bo'ladi:
 | 2 | `HF_HUB_OFFLINE=1` qo'ying | `sentence-transformers` har ishga tushganda Hub'ga so'rov yuboradi; ketma-ket ko'p jarayonda Hub ulanishni yopadi |
 | 3 | `text_for_embedding` ni o'zgartirsangiz **butun korpus** qayta embedding qilinadi | Kesh shu maydonning xeshiga bog'langan (~3 soat) |
 | 4 | Host'da `index.py` yoki `eval/run.py` dan **oldin** backend konteynerini to'xtating | Ikkalasi ham embedding modelini yuklaydi, 8 GB da sig'maydi |
-| 5 | Indexatsiyadan oldin `bash scripts/backup.sh` | Buzilgan yangilanishdan snapshot orqali qaytish mumkin |
+| 5 | Indexatsiyadan oldin `python scripts/backup.py` | Buzilgan yangilanishdan snapshot orqali qaytish mumkin |
 | 6 | Yangi hujjatdan keyin `python scripts/build_vocab.py` | Coverage tekshiruvi shu lug'atga tayanadi |
 | 7 | `data/raw/*.html` **hech qachon o'zgartirilmaydi** | Asl manba. Parser xatosi topilsa `run_extract.py` ni qayta ishga tushiring, qayta yuklash shart emas |
 
 ### Zaxira nusxa
 
 ```bash
-bash scripts/backup.sh
+python scripts/backup.py            # kunlik nusxa
+python scripts/export_corpus.py     # boshqa mashinaga ko'chirish uchun arxiv
 ```
 
-Qdrant snapshot, SQLite dump va reyestr nusxasini `data/backups/{sana}/` ga yozadi,
-oxirgi 5 tasini saqlaydi.
+`backup.py` Qdrant snapshot, SQLite dump va reyestr nusxasini `data/backups/{sana}/`
+ga yozadi, oxirgi 5 tasini saqlaydi. Har kuni yangilanishdan **oldin** avtomatik
+ishlaydi. `backup.sh` shu skriptga yo'naltiruvchi qobiq — eski odatlar buzilmasligi
+uchun qoldirilgan.
 
 ---
 
@@ -795,8 +896,14 @@ huquqiy-rag/
 │   │   ├── tools.py             5 vosita, jonli lex.uz, yangilanish navbati
 │   │   ├── attachments.py       PDF / rasm / DOCX / TXT yuklash
 │   │   ├── embedding.py         lokal e5 va Gemini, rate limiter
-│   │   └── llm.py               Gemini wrapper, streaming, model fallback
-│   └── db/sqlite.py             sessiyalar va xabarlar
+│   │   ├── llm.py               Gemini wrapper, streaming, model fallback
+│   │   ├── auth.py              imzolangan token, API kalitlar, dependency
+│   │   ├── plans.py             tariflar va ularning chegaralari
+│   │   ├── usage.py             so'rov bo'yicha sarf o'lchovi va kvota
+│   │   └── corpus.py            reyestr va chunk indeksi, mtime kuzatuvi
+│   ├── middleware.py            request-id, access log, body limit
+│   ├── logging_setup.py         structlog + stdlib bitta formatda
+│   └── db/sqlite.py             hisoblar, sessiyalar, xabarlar, sarf jurnali
 ├── parser/
 │   ├── lex/
 │   │   ├── client.py            robots.txt, kesh, eksponensial backoff
@@ -810,16 +917,23 @@ huquqiy-rag/
 ├── scripts/
 │   ├── index.py                 Qdrant indexatsiyasi, --group, --chunk-ids
 │   ├── build_vocab.py           korpus lug'ati (coverage uchun)
-│   ├── backup.sh                Qdrant snapshot + SQLite dump
+│   ├── backup.py                Qdrant snapshot + SQLite dump
+│   ├── export_corpus.py         korpusni arxivga yig'ish (deploy uchun)
+│   ├── import_corpus.py         arxivni yangi mashinaga tiklash
 │   └── ui_check.py              Playwright UI sinovlari (12 tekshiruv)
+├── tests/                       72 ta birlik va API testi (pytest)
+├── docs/legal/                  oferta, maxfiylik, saqlash siyosati
+├── deploy/Caddyfile             TLS, xavfsizlik sarlavhalari, SSE proksi
 ├── eval/
 │   ├── questions.jsonl          73 savol — retrieval sifati
 │   ├── hard_questions.jsonl     22 savol — chegaralar va halollik
 │   ├── hard_questions.md        qiyin to'plam tavsifi
 │   └── run.py                   recall@5, recall@10, MRR
-├── frontend/                    vanilla JS chat (SSE, markdown, temalar)
+├── frontend/                    vanilla JS chat (SSE, markdown, temalar, uz/ru)
 ├── data/                        gitignore — korpus, index, keshlar
-├── docker-compose.yml           qdrant (2g) + backend (3g)
+├── docker-compose.yml           qdrant + backend + scheduler
+├── docker-compose.prod.yml      Caddy, ko'p worker, JSON logging
+├── MONETIZATSIYA.md             tariflar, birlik iqtisodiyoti, daromad rejasi
 └── KAMCHILIKLAR.md              ochiq muammolar
 ```
 
@@ -834,6 +948,9 @@ Tizimning zaif joylari va ularning sabablari alohida faylda ochiq yozilgan:
 Qisqacha: dense tomon jadvalli moddalarda ko'r, so'zlashuv tilidan huquqiy atamaga
 o'tish bo'shlig'i bor, bitta savolda ikkita modda raqami bo'lsa ikkinchisi yo'qoladi,
 LLM bepul tarifi kuniga ~120 so'rov bilan cheklangan.
+
+Xavfsizlik va infratuzilma bandlari 2026-08-01 auditida yopildi — o'sha faylning
+0-bo'limida ro'yxati bor.
 
 ---
 

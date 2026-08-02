@@ -5,6 +5,40 @@ tuzatish yo'li ko'rsatilgan. Oxirgi bo'lim — tizim doirasida hal qilib bo'lmay
 tashqi sharoitdan kelib chiqadigan cheklovlar.
 
 **O'lchov sanasi:** 2026-07-29 · 22 513 chunk · `eval/run.py`
+**Oxirgi tahrir:** 2026-08-02 — Google kirishi bo'yicha o'lchov (3.9)
+
+---
+
+## 0. 2026-08-01 da tuzatilganlar
+
+Production'ga chiqarish oldidan o'tkazilgan audit natijasida quyidagilar hal qilindi.
+Batafsil: [MONETIZATSIYA.md](MONETIZATSIYA.md) 1-bo'lim.
+
+| Kamchilik | Nima edi | Nima bo'ldi |
+|---|---|---|
+| **Suhbatlar ochiq edi** | `GET /api/sessions` **barcha** foydalanuvchilar suhbatini qaytarardi; har kim har qanday sessiyani o'qishi va o'chirishi mumkin edi | `sessions.user_id`, har so'rovda egalik tekshiruvi. Begona sessiya 404 qaytaradi — mavjudligini ham bildirmaydi |
+| **Autentifikatsiya yo'q edi** | Barcha endpointlar ochiq, har kim Gemini kaliti hisobidan so'rov yuborardi | Imzolangan bearer token (`POST /api/auth/anon`) va B2B uchun `X-API-Key` |
+| **Rate limiting ishlamasdi** | `Limiter` e'lon qilingan, `SlowAPIMiddleware` qo'shilmagan → amalda cheklov nol | Middleware ulandi; kalit hisob bo'yicha (proksi orqasida IP hammaga bitta) |
+| **Qdrant himoyasiz** | `0.0.0.0:6333`, parolsiz | `127.0.0.1:6333` + `QDRANT__SERVICE__API_KEY` |
+| **Versiyalar qotirilmagan** | `requirements.txt` da bitta ham versiya yo'q | Hammasi pin qilindi, `requirements-dev.txt` ajratildi |
+| **SQLite ulanish oqishi** | `with sqlite3.connect(...)` tranzaksiyani yopadi, ulanishni emas → deskriptorlar tugaydi, "database is locked" | Contextmanager ulanishni yopadi; WAL yoqildi |
+| **LLM fallback qaytmasdi** | `_model_index` faqat oshardi → bitta foydalanuvchi kvotani tugatsa, hammaga eng zaif model qolardi | `LLM_PRIMARY_RETRY_MINUTES` dan keyin asosiy model qayta sinaladi |
+| **Ko'p worker bilan ishlamasdi** | Scheduler `lifespan` da → 4 worker = 4 ta parallel crawl, lex.uz bloklaydi | Scheduler alohida konteyner (`python -m backend.app.scheduler`) |
+| **Embedding bo'g'izi** | Bitta `asyncio.Lock` — barcha savollar navbatda | `EMBED_CONCURRENCY` semaphore |
+| **Sarf hisobi yo'q edi** | Token hisobi global, kim sarflagani noma'lum | Har so'rov uchun meter, `usage_events` jadvali, USD xarajat |
+| **Kuzatuv yo'q edi** | `structlog` bog'liqlikda bor, kodda ishlatilmagan | structlog + request-id har qatorda + access log |
+| **SSE xatosi tashqariga chiqardi** | `str(exc)` — provayder xato matni brauzerga | Umumiy xabar + `request_id`, tafsilot jurnalda |
+| **Fayl yuklash cheklovsiz** | 15 MB base64, autentifikatsiyasiz | Body limit middleware + tarif bo'yicha ruxsat va hajm |
+| **Korpus deploy yo'li yo'q** | `data/` gitignore'da, serverda korpus qayerdan kelishi aytilmagan | `scripts/export_corpus.py` / `import_corpus.py` |
+| **Testlar yo'q edi** | 0 ta birlik testi | 72 ta test, GitHub Actions CI |
+| **Kesh eskirardi** | `lru_cache` hech qachon yangilanmasdi → yangilangan hujjat restartgacha ko'rinmasdi | `corpus.py` — mtime kuzatuvi, chunk fayli byte-offset indeksi |
+| **Path traversal ehtimoli** | `report_date` fayl yo'liga tekshirilmasdan qo'yilardi | `^\d{4}-\d{2}-\d{2}$` |
+| **Rus tili yarim ishlardi** | Kirill savolda sparse tomon nolga tushardi | Rus savol aniqlanadi va o'zbekcha variantga tarjima qilinib qidiriladi |
+| **Huquqiy hujjatlar yo'q** | Oferta, maxfiylik siyosati, saqlash muddati — yo'q | `docs/legal/` (yurist tasdig'i talab qilinadi) |
+| **Konteyner root ostida** | — | `uid 10001`, healthcheck, Caddy + TLS |
+
+**Qolgan kamchiliklar** quyida — ular qidiruv sifatiga oid va tashqi cheklovlarga
+bog'liq, ya'ni audit doirasida hal qilinmaydi.
 
 ---
 
@@ -97,15 +131,41 @@ birinchi mos kelganini qaytarsin.
 
 | # | Kamchilik | Holati |
 |---|---|---|
-| 3.1 | **Rate limiting amalda ishlamayapti** | `main.py` da `Limiter(default_limits=["60/minute"])` e'lon qilingan, `RateLimitExceeded` handler ham ulangan — lekin `SlowAPIMiddleware` qo'shilmagan va yo'llarda `@limiter.limit(...)` yo'q. slowapi'da `default_limits` faqat middleware orqali kuchga kiradi, ya'ni **hozir hech qanday chegara qo'llanmaydi** |
-| 3.2 | **API kalit himoyasi yo'q** | Barcha endpointlar ochiq, CORS `allow_origins=["*"]`. Lokal ishlatishda muammo emas, ochiq internetga chiqarilsa — jiddiy muammo |
-| 3.3 | **Birlik testlari yo'q** | Faqat `eval/run.py` (retrieval sifati) va `scripts/ui_check.py` (UI). `sparse.tokenize`, `query.detect_article_no`, `diff.compare`, `chunk_document` kabi sof funksiyalar test bilan qoplanmagan — regressiyani faqat eval ko'rsatadi, u ham bilvosita |
-| 3.4 | **Kirill hujjatlar sinalmagan** | Transliteratsiya funksiyasi yozilgan, lekin **hech qachon ishlamagan**: 1 283 hujjatning hammasi lotin yozuvida chiqdi. Ya'ni bu kod yo'li tekshirilmagan |
+| 3.1 | Rate limiting amalda ishlamayapti | ✅ **tuzatildi** 2026-08-01 |
+| 3.2 | API kalit himoyasi yo'q | ✅ **tuzatildi** 2026-08-01 |
+| 3.3 | Birlik testlari yo'q | ✅ **tuzatildi** — 72 ta test, `pytest` |
+| 3.4 | **Kirill hujjatlar sinalmagan** | Transliteratsiya funksiyasi yozilgan, lekin **hech qachon ishlamagan**: 1 283 hujjatning hammasi lotin yozuvida chiqdi. Ya'ni bu kod yo'li tekshirilmagan. Test yozish uchun kirill-only hujjat topish kerak |
+| 3.5 | **To'lov integratsiyasi yo'q** | Buyurtma oqimi to'liq ishlaydi (muddat, chegirma, buyurtma raqami, faollashtirish), lekin bankdan "to'landi" signali yo'q — operator qo'lda tasdiqlaydi. Payme/Click callback'i `orders.activate` ni chaqirsa bas. Batafsil: [MONETIZATSIYA.md](MONETIZATSIYA.md) 5-bo'lim |
+| 3.8 | **SMS provayderi ulanmagan** | `SMS_PROVIDER=console` — kod jurnalga yoziladi. Eskiz uchun kod yozilgan, lekin hisob va shablon tasdig'i kerak. Production'da `console` **rad etiladi**, ya'ni ulanmasa ro'yxatdan o'tish ishlamaydi |
+| 3.9 | **Google tugmasi render bo'lmaydi** | Client ID olindi va `.env` ga yozildi, backend tomoni to'liq ishlaydi. Lekin GIS tugma endpointi 403 qaytaradi. O'lchov va sabab quyida |
+| 3.6 | **Huquqiy hujjatlar yurist tasdig'isiz** | `docs/legal/` dagi uch hujjat tizim amalda nima qilishiga muvofiq yozilgan, lekin **yuridik kuchga ega emas**. Ishga tushirishdan oldin yurist ko'rib chiqishi shart |
+| 3.7 | **Kechikish — 82 soniya** | Bitta savol uchun o'lchandi (2026-08-01, `mehnat` rejimi). Kvota cheklovi emas: jurnalda 429 yo'q. Sabab — CPU'da 5 ta embedding va 3 ta ketma-ket LLM chaqiruvi. Foydalanuvchi uchun bu **juda uzoq**. Choralar va ularning narxi: [MONETIZATSIYA.md](MONETIZATSIYA.md) 2.2-bo'lim. Eng foydalisi — rerank'ni lokal cross-encoder'ga o'tkazish (xarajat −60%, vaqt −15…25 s) |
 
-**Tuzatish (3.1):** `app.add_middleware(SlowAPIMiddleware)` — bitta qator.
+### 3.9 — Google kirishi: nima o'lchandi
 
-**Tuzatish (3.2):** `X-API-Key` sarlavhasini tekshiradigan `Depends` bog'liqligi va
-CORS ro'yxatini aniq domenlarga cheklash. Deploy qilishdan **oldin** majburiy.
+Holat 2026-08-02 ga. Console tomonida kamchilik topilmadi, muammo Google'ning tugma
+endpointida.
+
+| Tekshiruv | Natija |
+|---|---|
+| `GOOGLE_CLIENT_ID` formati | 72 belgi, to'g'ri, kesilmagan |
+| Klient Google'da mavjudmi | **Ha**. Soxta ID `invalid_client` beradi, bu ID bermaydi |
+| Klient turi | **Web application**. `127.0.0.1:1234` va `oob` redirect'lari rad etildi — desktop klient emas |
+| `http://localhost:8000` JS origin sifatida ro'yxatdami | **Ha**. `storagerelay://http/localhost:8000` redirect'i bilan avtorizatsiya endpointi kirish sahifasiga o'tkazadi; `localhost:9999` va begona domen esa rad etiladi |
+| `GET /api/auth/config` | `google_enabled: true` |
+| Auth testlari | 17 ta, hammasi o'tadi |
+| `accounts.google.com/gsi/button` | **403**, konsolda `[GSI_LOGGER]: The given origin is not allowed for the given client ID` |
+| Headless va oddiy brauzer | Farqi yo'q, ikkalasida ham 403 |
+
+Ya'ni Google'ning ikki qatlami bir-biriga zid javob beradi: OAuth avtorizatsiya endpointi
+origin'ni tan oladi, GIS tugma endpointi tanimaydi. Console'da qo'shiladigan sozlama
+qolmagan.
+
+**Chora:** tugmani render qiladigan `gsi/button` yo'lidan voz kechildi. Kirish
+`google.accounts.oauth2.initTokenClient` popup oqimiga o'tkazildi — u aynan yuqorida
+tekshirilgan va **ishlaydigan** `storagerelay` redirect'idan foydalanadi. Backend endi
+ID token bilan bir qatorda access token'ni ham qabul qiladi va uni `tokeninfo` orqali
+tekshiradi (`aud` bizning klientmi — asosiy shart).
 
 ---
 
@@ -127,13 +187,16 @@ yo'qoladi.
 
 ## 5. Ustuvorlik
 
-Agar loyiha davom ettirilsa, shu tartibda:
+Xavfsizlik va infratuzilma bandlari 2026-08-01 da yopildi. Qolgani — qidiruv sifati:
 
 | Navbat | Ish | Sabab |
 |---|---|---|
-| 1 | 3.1 va 3.2 — rate limiting va API kalit | Deploy qilishdan oldin majburiy, ikkalasi ham bir necha qator |
-| 2 | 1.3 — ikkinchi modda raqami | Sabab aniq, tuzatish kichik, natija darhol o'lchanadi |
-| 3 | 2.1 — eval yorliqlari ro'yxatga aylansin | Bu tuzatilmasa, keyingi o'lchovlar noto'g'ri xato ko'rsatib turaveradi |
-| 4 | 1.2 — so'zlashuv lug'ati | Eng ko'p foydalanuvchiga ta'sir qiladigan bo'shliq |
-| 5 | 3.3 — birlik testlari | Yuqoridagilarni xavfsiz qilish uchun |
-| 6 | 1.1 — dense tomon | Eng qimmati, eng oxirida |
+| 1 | 3.8 — SMS provayderini ulash (Eskiz) | Bo'lmasa hech kim ro'yxatdan o'ta olmaydi |
+| 2 | 3.7 — kechikishni tushirish (lokal rerank) | 82 s da foydalanuvchi kutmaydi. Xarajatni ham 60% kamaytiradi |
+| 3 | 3.6 — huquqiy hujjatlarni yurist tasdig'idan o'tkazish | Ishga tushirishdan oldin majburiy |
+| 4 | 3.9 — Google kirishini popup oqimida sinash | Console tomoni to'g'ri, `gsi/button` esa 403 beradi. Yechim yozildi, tirik hisob bilan sinash qoldi |
+| 3 | 1.3 — ikkinchi modda raqami | Sabab aniq, tuzatish kichik, natija darhol o'lchanadi |
+| 4 | 2.1 — eval yorliqlari ro'yxatga aylansin | Bu tuzatilmasa, keyingi o'lchovlar noto'g'ri xato ko'rsatib turaveradi |
+| 5 | 1.2 — so'zlashuv lug'ati | Eng ko'p foydalanuvchiga ta'sir qiladigan bo'shliq |
+| 6 | 1.4 va 1.5 — ko'p nishonli savollar | Savolni bo'lish kerak |
+| 7 | 1.1 — dense tomon | Eng qimmati (~3 soat qayta embedding), eng oxirida |
