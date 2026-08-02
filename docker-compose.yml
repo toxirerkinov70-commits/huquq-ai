@@ -53,6 +53,11 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     command: ["python", "-m", "backend.app.scheduler"]
+    # the image carries the backend's healthcheck, which curls port 8000. This container
+    # serves no HTTP at all, so it inherited a check it can never pass and sat there
+    # reporting unhealthy while working perfectly.
+    healthcheck:
+      disable: true
     env_file: .env
     environment:
       QDRANT_URL: http://qdrant:6333
