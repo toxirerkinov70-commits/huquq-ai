@@ -1,0 +1,47 @@
+# Production overlay:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# It puts Caddy in front and runs uvicorn with more than one worker — which is safe only
+# because the scheduler moved to its own container. The API port stays bound to the
+# loopback interface from the base file, so only Caddy can reach it from outside.
+services:
+  backend:
+    expose:
+      - "8000"
+    environment:
+      ENVIRONMENT: production
+      ENABLE_SCHEDULER: "false"
+      LOG_JSON: "true"
+    command:
+      - uvicorn
+      - backend.app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "${UVICORN_WORKERS:-2}"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  caddy_logs:

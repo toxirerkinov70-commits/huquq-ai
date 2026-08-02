@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# tests and the browser check; not installed in the runtime image
+pytest==9.1.1
+pytest-asyncio==1.3.0
+playwright==1.61.0

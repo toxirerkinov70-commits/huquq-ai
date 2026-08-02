@@ -25,9 +25,26 @@ SITUATION_RE = re.compile(
 )
 
 
+CYRILLIC_RE = re.compile(r"[а-яёА-ЯЁ]")
+
+
 def is_situation(query: str) -> bool:
     """Whether the user is describing what happened to them rather than asking what a rule says."""
     return bool(SITUATION_RE.search(query))
+
+
+def looks_russian(query: str) -> bool:
+    """A Cyrillic question cannot reach a Latin-script corpus through the sparse side.
+
+    The index holds the Uzbek Latin text of every act, so BM25 scores a Russian question
+    at zero on every chunk and half the hybrid disappears. Detecting it lets the pipeline
+    put an Uzbek rendering of the question next to the original before searching.
+    """
+    letters = [char for char in query if char.isalpha()]
+    if not letters:
+        return False
+    cyrillic = sum(1 for char in letters if CYRILLIC_RE.match(char))
+    return cyrillic / len(letters) > 0.3
 
 
 def detect_article_no(query: str) -> str | None:

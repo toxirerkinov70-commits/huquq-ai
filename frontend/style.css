@@ -1,10 +1,15 @@
+/* One theme across the whole window.
+   The sidebar used to keep its dark palette in light mode, so half the screen was night
+   and the other half day. Its colours are now derived from the same theme as everything
+   else, and only the surface is a shade apart so the panel still reads as a panel. */
 :root {
   --bg: #f6f7f9;
   --surface: #ffffff;
-  --sidebar-bg: #0f1729;
-  --sidebar-text: #cbd2e0;
-  --sidebar-muted: #7c8598;
-  --sidebar-active: #1d2941;
+  --sidebar-bg: #eef0f4;
+  --sidebar-text: #232833;
+  --sidebar-muted: #6b7280;
+  --sidebar-active: #dfe3ec;
+  --sidebar-border: #dcdfe6;
   --border: #e4e6ea;
   --text: #171a21;
   --muted: #676d79;
@@ -12,6 +17,9 @@
   --accent-hover: #2a43b4;
   --accent-soft: #edf0fc;
   --user-bubble: #3451d1;
+  --scroll-thumb: #c6cad4;
+  --scroll-thumb-hover: #a9aeba;
+  --overlay: rgba(15, 23, 41, .38);
   --radius: 14px;
   --shadow: 0 1px 3px rgba(15, 23, 41, .07), 0 4px 16px rgba(15, 23, 41, .05);
 }
@@ -23,6 +31,7 @@
   --sidebar-text: #c3c9d6;
   --sidebar-muted: #6f7686;
   --sidebar-active: #1c212e;
+  --sidebar-border: #23272f;
   --border: #2a2e38;
   --text: #e9eaee;
   --muted: #9aa0ac;
@@ -30,10 +39,35 @@
   --accent-hover: #8598f0;
   --accent-soft: #222840;
   --user-bubble: #3d55c4;
+  --scroll-thumb: #333947;
+  --scroll-thumb-hover: #454c5c;
+  --overlay: rgba(0, 0, 0, .6);
   --shadow: 0 1px 3px rgba(0, 0, 0, .4);
 }
 
 * { box-sizing: border-box; }
+
+/* Any rule that sets display beats the browser's [hidden] rule, and most of this
+   interface sets display. Without this, hiding something by attribute silently does
+   nothing — which is how the Google button stayed on screen while unconfigured. */
+[hidden] { display: none !important; }
+
+/* Scrollbars follow the theme too. The default white gutter on the agent and
+   conversation lists was the brightest thing on a dark screen. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: content-box; }
+*::-webkit-scrollbar-corner { background: transparent; }
 
 html, body { height: 100%; }
 
@@ -46,6 +80,9 @@ body {
 }
 
 .layout { display: flex; height: 100vh; overflow: hidden; }
+/* display:flex outranks the browser's [hidden] rule, so the chat would render behind
+   the sign-in screen without this */
+.layout[hidden] { display: none; }
 
 /* ---------- sidebar ---------- */
 
@@ -58,38 +95,39 @@ body {
   flex-direction: column;
   padding: 18px 14px 14px;
   gap: 14px;
+  overflow: hidden;
 }
 
 .brand { display: flex; align-items: center; gap: 10px; padding: 2px 6px; }
 .brand-mark {
-  display: grid;
-  place-items: center;
   width: 34px; height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4b66e1, #2a3f9e);
-  color: #fff;
-  font-size: 19px;
-  font-weight: 700;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(37, 99, 235, .28));
 }
-.brand-name { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: .01em; }
+.brand-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--sidebar-text);
+  letter-spacing: .01em;
+}
 
 .new-chat {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, .16);
-  background: rgba(255, 255, 255, .06);
-  color: #fff;
+  border: 1px solid var(--sidebar-border);
+  background: var(--surface);
+  color: var(--sidebar-text);
   border-radius: 10px;
   padding: 10px 14px;
   font: inherit;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
 }
-.new-chat:hover { background: rgba(255, 255, 255, .12); }
+.new-chat:hover { background: var(--sidebar-active); border-color: var(--accent); }
 
 .nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item {
@@ -108,8 +146,26 @@ body {
   text-align: left;
 }
 .nav-item:hover { background: var(--sidebar-active); }
-.nav-item.active { background: var(--sidebar-active); color: #fff; font-weight: 700; }
+.nav-item.active { background: var(--sidebar-active); color: var(--text); font-weight: 700; }
 .nav-item svg { flex-shrink: 0; opacity: .8; }
+
+/* brand and new-chat stay put, the middle scrolls, the account bar stays reachable */
+.side-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* room for the thumb so it never sits on top of a session title */
+  margin-right: -6px;
+  padding-right: 6px;
+}
+/* nothing inside may be squeezed: a compressed section keeps its full content and
+   spills it over the next one, which is how the seventh agent ended up printed on top
+   of the conversations heading */
+.side-scroll > * { flex-shrink: 0; }
 
 .side-section { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
 
@@ -134,8 +190,13 @@ body {
 .agents-section.collapsed .chevron { transform: rotate(-90deg); }
 .agents-section.collapsed .agent-list { display: none; }
 
-.agent-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; max-height: 34vh; }
+/* the scrolling belongs to .side-scroll, not to each list inside it: nested scroll
+   regions on a phone mean a swipe moves whichever one it happens to land on */
+.agent-list { display: flex; flex-direction: column; gap: 2px; }
 .agent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   border: 0;
   background: transparent;
   color: var(--sidebar-text);
@@ -146,15 +207,36 @@ body {
   font-weight: 600;
   cursor: pointer;
   text-align: left;
-  white-space: nowrap;
+  width: 100%;
+}
+.agent span {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* each mode carries its own colour, so the list is scanned by shape and hue rather
+   than read word by word */
+.agent-icon {
+  display: grid;
+  place-items: center;
+  width: 22px; height: 22px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--agent-color) 16%, transparent);
+  color: var(--agent-color);
+}
+.agent-icon svg { width: 14px; height: 14px; }
 .agent:hover { background: var(--sidebar-active); }
-.agent.active { background: var(--sidebar-active); color: #fff; font-weight: 700; box-shadow: inset 2px 0 0 var(--accent); }
+.agent.active {
+  background: var(--sidebar-active);
+  color: var(--text);
+  font-weight: 700;
+  box-shadow: inset 2px 0 0 var(--agent-color, var(--accent));
+}
+.agent.active .agent-icon { background: color-mix(in srgb, var(--agent-color) 26%, transparent); }
 
-.sessions-section { flex: 1; min-height: 60px; }
-.session-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; flex: 1; }
+.sessions-section { flex: 1 0 auto; min-height: 60px; }
+.session-list { display: flex; flex-direction: column; gap: 2px; }
 .session-item {
   display: flex;
   align-items: center;
@@ -172,30 +254,85 @@ body {
   width: 100%;
 }
 .session-item:hover { background: var(--sidebar-active); }
-.session-item.active { background: var(--sidebar-active); color: #fff; box-shadow: inset 2px 0 0 var(--accent); }
+.session-item.active { background: var(--sidebar-active); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
 .session-item .s-title {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.session-item .s-del {
+.session-item .s-pin { flex-shrink: 0; color: var(--accent); display: grid; place-items: center; }
+.session-item .s-menu {
   border: 0;
   background: transparent;
   color: var(--sidebar-muted);
-  font-size: 15px;
-  line-height: 1;
   cursor: pointer;
-  padding: 2px 4px;
+  padding: 3px 4px;
   border-radius: 6px;
   flex-shrink: 0;
   opacity: 0;
+  display: grid;
+  place-items: center;
 }
-.session-item:hover .s-del { opacity: 1; }
-.session-item .s-del:hover { color: #e05b4d; background: rgba(224, 91, 77, .12); }
+.session-item:hover .s-menu,
+.session-item .s-menu[aria-expanded="true"] { opacity: 1; }
+.session-item .s-menu:hover { color: var(--text); background: var(--surface); }
+.session-item .s-rename {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 13px;
+}
 .session-empty { font-size: 12.5px; color: var(--sidebar-muted); padding: 4px 10px; }
 
-.side-bottom { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
+/* the row menu: rename, pin, delete */
+.row-menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 178px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: 0 10px 34px rgba(15, 23, 41, .22);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.row-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.row-menu button:hover { background: var(--accent-soft); }
+.row-menu button.danger { color: #e05b4d; }
+.row-menu button.danger:hover { background: rgba(224, 91, 77, .12); }
+.row-menu svg { flex-shrink: 0; opacity: .8; }
+.row-menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+
+.side-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+}
 
 /* ring-shaped agent mode toggle */
 .ring-toggle {
@@ -232,7 +369,7 @@ body {
   transform: scale(.4);
   transition: opacity .2s, transform .2s;
 }
-.ring-toggle.on { color: #fff; }
+.ring-toggle.on { color: var(--text); }
 .ring-toggle.on .ring {
   border-color: var(--accent);
   box-shadow: 0 0 10px rgba(109, 132, 236, .55);
@@ -240,6 +377,62 @@ body {
 .ring-toggle.on .ring::after { opacity: 1; transform: scale(1); }
 
 .freshness { font-size: 11px; font-weight: 500; color: var(--sidebar-muted); margin: 0; padding: 0 6px; }
+
+.legal-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  font-size: 10.5px;
+  color: var(--sidebar-muted);
+}
+.legal-links button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-links button:hover { color: var(--sidebar-text); }
+
+/* pricing */
+.plans-card { max-width: 940px; }
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 4px 2px 2px;
+}
+.plan-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 15px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.plan-card.current { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.plan-card h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.plan-price { margin: 0; font-size: 17px; font-weight: 700; color: var(--accent); }
+.plan-tagline { margin: 0; font-size: 12px; color: var(--muted); }
+.plan-features { margin: 4px 0 0; padding-left: 17px; display: grid; gap: 5px; }
+.plan-features li { font-size: 12.5px; line-height: 1.45; }
+.plan-badge {
+  margin-top: auto;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.plans-note { margin: 14px 2px 0; font-size: 12px; color: var(--muted); }
 
 /* ---------- floating controls ---------- */
 
@@ -258,10 +451,40 @@ body {
   box-shadow: var(--shadow);
 }
 
-.theme-switch {
+.top-controls {
   position: fixed;
   top: 12px; right: 14px;
   z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow);
+}
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 600 12px/1 inherit;
+  letter-spacing: .04em;
+  transition: background .15s, color .15s;
+}
+.lang-switch button:hover { color: var(--text); }
+.lang-switch button.active { background: var(--accent); color: #fff; }
+
+.theme-switch {
   display: flex;
   gap: 2px;
   background: var(--surface);
@@ -713,6 +936,11 @@ body {
     box-shadow: 0 0 40px rgba(0, 0, 0, .3);
   }
   .sidebar.open { transform: translateX(0); }
+  /* the menu button floats over the top-left corner, which is where the brand sits
+     once the drawer is open */
+  .sidebar .brand { padding-left: 46px; }
+  /* one line: on a narrow panel this wrapped to two and crowded the bottom edge */
+  .freshness { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .messages { padding: 64px 14px 12px; }
   .composer-wrap { padding: 6px 12px 12px; }
   .empty h1 { font-size: 24px; }

@@ -1,13 +1,22 @@
 services:
   qdrant:
-    image: qdrant/qdrant:latest
+    image: qdrant/qdrant:v1.15.1
+    # bound to the loopback interface: the container used to publish an unauthenticated
+    # database to every interface, which on a public host is an open door to the corpus
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
     environment:
       QDRANT__STORAGE__ON_DISK_PAYLOAD: "true"
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     mem_limit: 2g
     restart: unless-stopped
 
@@ -16,18 +25,45 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_BIND:-127.0.0.1}:8000:8000"
     env_file: .env
     environment:
       QDRANT_URL: http://qdrant:6333
+      # the refresh has its own container; started here it would run once per worker
+      ENABLE_SCHEDULER: "false"
     volumes:
       - ./data:/app/data
       # the embedding model is ~1.1 GB and is downloaded once into this volume rather
       # than baked into the image
       - hf_models:/models
     depends_on:
-      - qdrant
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
     mem_limit: 3g
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "backend.app.scheduler"]
+    env_file: .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      ENABLE_SCHEDULER: "true"
+    volumes:
+      - ./data:/app/data
+      - hf_models:/models
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    mem_limit: 2g
     restart: unless-stopped
 
 volumes:

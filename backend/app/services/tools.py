@@ -12,21 +12,17 @@ import logging
 import threading
 from dataclasses import replace
 from datetime import datetime, timezone
-from functools import lru_cache
-from pathlib import Path
 from urllib.parse import urlencode
 
 from selectolax.parser import HTMLParser
 
 from ..config import settings
-from . import coverage
+from . import corpus, coverage
+from .corpus import DATA_DIR
 from .retrieval import SearchFilters
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path(__file__).resolve().parents[3] / "data"
-REGISTRY_PATH = DATA_DIR / "registry.jsonl"
-CHUNKS_PATH = DATA_DIR / "chunks.jsonl"
 MARKDOWN_DIR = DATA_DIR / "markdown"
 QUEUE_PATH = DATA_DIR / "update_queue.jsonl"
 
@@ -116,26 +112,12 @@ _client_lock = threading.Lock()
 _live_client = None
 
 
-@lru_cache(maxsize=1)
 def _registry() -> dict[str, dict]:
-    if not REGISTRY_PATH.exists():
-        return {}
-    with REGISTRY_PATH.open(encoding="utf-8") as handle:
-        return {r["doc_id"]: r for r in (json.loads(l) for l in handle if l.strip())}
+    return corpus.registry.as_map()
 
 
-@lru_cache(maxsize=64)
 def _document_chunks(doc_id: str) -> list[dict]:
-    if not CHUNKS_PATH.exists():
-        return []
-    chunks = []
-    with CHUNKS_PATH.open(encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                chunk = json.loads(line)
-                if chunk.get("doc_id") == doc_id:
-                    chunks.append(chunk)
-    return chunks
+    return corpus.chunks.chunks(doc_id)
 
 
 def _lex_client():

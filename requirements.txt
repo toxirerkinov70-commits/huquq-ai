@@ -1,12 +1,15 @@
-apscheduler
-fastapi
-uvicorn[standard]
-httpx
-pydantic
-pydantic-settings
-qdrant-client
-selectolax
-sentence-transformers
-slowapi
-structlog
-tqdm
+# Pinned deliberately: an unpinned build is reproducible only until one of these
+# releases a new major version, and the failure then shows up in production rather
+# than here. Bump them on purpose, run the tests, then commit the new pin.
+apscheduler==3.11.3
+fastapi==0.140.0
+uvicorn[standard]==0.51.0
+httpx==0.28.1
+pydantic==2.13.4
+pydantic-settings==2.14.2
+qdrant-client==1.18.0
+selectolax==0.4.11
+sentence-transformers==5.6.1
+slowapi==0.1.10
+structlog==26.1.0
+tqdm==4.69.1

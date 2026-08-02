@@ -7,7 +7,12 @@ from qdrant_client import AsyncQdrantClient, models
 from ..config import settings
 from . import aliases, coverage
 from .embedding import get_embedding_client
-from .query import ARTICLE_RE, SUPERSCRIPTS, detect_article_no  # noqa: F401  (re-exported)
+from .query import (  # noqa: F401  (re-exported)
+    ARTICLE_RE,
+    SUPERSCRIPTS,
+    detect_article_no,
+    looks_russian,
+)
 from .sparse import encode_query
 
 logger = logging.getLogger(__name__)
@@ -76,11 +81,24 @@ mustaqil, o'zi tushunarli savolga aylantirasan. Olmoshlarni ("u", "bu", "unga")
 aniq atamalar bilan almashtir. Yangi ma'lumot qo'shma.
 Faqat qayta yozilgan savolni qaytar, boshqa hech narsa yozma."""
 
+# The corpus is Uzbek Latin only, so a Russian question scores zero on the sparse side
+# and the hybrid falls back to dense alone. Translating the question into the terms the
+# statute itself uses restores the other half of the search.
+EXPAND_SYSTEM_RU = """Ты переводишь юридические вопросы с русского на узбекский язык
+(латиница) для поиска по законодательству Узбекистана.
+
+Верни 2 варианта поискового запроса на узбекском языке, используя официальные
+юридические термины из узбекских кодексов (например: "mehnat shartnomasini bekor
+qilish", "jinoiy javobgarlik", "da'vo muddati"). Смысл не меняй.
+
+Верни только JSON: {"queries": ["...", "..."]}"""
+
 
 async def expand_query(query: str, llm) -> list[str]:
     """Alternative phrasings, so one unlucky wording does not sink the search."""
+    system = EXPAND_SYSTEM_RU if looks_russian(query) else EXPAND_SYSTEM
     try:
-        data = await llm.generate_json(f"Savol: {query}", system=EXPAND_SYSTEM)
+        data = await llm.generate_json(f"Savol: {query}", system=system)
     except Exception as exc:
         logger.warning("query expansion failed: %s", exc)
         return []
@@ -138,7 +156,11 @@ class Retriever:
         embedder=None,
         collection: str | None = None,
     ) -> None:
-        self.qdrant = qdrant or AsyncQdrantClient(url=settings.qdrant_url, timeout=60)
+        self.qdrant = qdrant or AsyncQdrantClient(
+            url=settings.qdrant_url,
+            api_key=settings.qdrant_api_key or None,
+            timeout=60,
+        )
         self.embedder = embedder or get_embedding_client()
         self.collection = collection or settings.qdrant_collection
 

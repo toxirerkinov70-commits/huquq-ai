@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import re
+import threading
 import time
 
 import httpx
@@ -179,11 +180,18 @@ class LocalEmbeddingClient:
     be marked differently or retrieval quality drops sharply.
     """
 
-    def __init__(self, model_name: str | None = None, dim: int | None = None) -> None:
+    def __init__(
+        self, model_name: str | None = None, dim: int | None = None, concurrency: int | None = None
+    ) -> None:
         self.model = model_name or settings.local_embed_model
         self.dim = dim or settings.embed_dim
         self._model = None
-        self._lock = asyncio.Lock()
+        # a single lock made every question queue behind every other one: on CPU an
+        # encode takes a few hundred milliseconds, so ten simultaneous users meant the
+        # last of them waited seconds before their search even started. torch releases
+        # the GIL during encoding, so a small pool is real parallelism
+        self._gate = asyncio.Semaphore(max(1, concurrency or settings.embed_concurrency))
+        self._load_lock = threading.Lock()
         self.request_count = 0
 
     async def __aenter__(self) -> "LocalEmbeddingClient":
@@ -196,16 +204,20 @@ class LocalEmbeddingClient:
         self._model = None
 
     def _load(self):
+        # two encodes can now start at once, and both would otherwise load the model
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
+            with self._load_lock:
+                if self._model is None:
+                    from sentence_transformers import SentenceTransformer
 
-            logger.info("loading local embedding model %s", self.model)
-            self._model = SentenceTransformer(self.model)
-            actual = self._model.get_sentence_embedding_dimension()
-            if actual != self.dim:
-                raise ValueError(
-                    f"{self.model} produces {actual} dimensions but EMBED_DIM is {self.dim}"
-                )
+                    logger.info("loading local embedding model %s", self.model)
+                    model = SentenceTransformer(self.model)
+                    actual = model.get_sentence_embedding_dimension()
+                    if actual != self.dim:
+                        raise ValueError(
+                            f"{self.model} produces {actual} dimensions but EMBED_DIM is {self.dim}"
+                        )
+                    self._model = model
         return self._model
 
     def _prefix(self, task_type: str) -> str:
@@ -226,7 +238,7 @@ class LocalEmbeddingClient:
 
     async def embed(self, texts: list[str], task_type: str) -> list[list[float]]:
         # encoding is CPU bound, so it must not block the event loop
-        async with self._lock:
+        async with self._gate:
             vectors = await asyncio.to_thread(self._encode, texts, task_type)
         self.request_count += len(texts)
         return vectors

@@ -2,11 +2,13 @@ import asyncio
 import json
 import logging
 import re
+import time
 from typing import AsyncIterator
 
 import httpx
 
 from ..config import settings
+from . import usage
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,27 @@ JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 
 
 class LLMError(RuntimeError):
-    pass
+    """Carries the provider's status code so the caller can say something useful.
+
+    Without it every failure reaches the user as one word. A spent daily quota, a
+    misconfigured key and a slow network need three different sentences.
+    """
+
+    def __init__(self, message: str, status: int | None = None) -> None:
+        self.status = status
+        super().__init__(message)
+
+    @property
+    def reason(self) -> str:
+        if self.status in (401, 403):
+            return "auth"
+        if self.status == 429:
+            return "quota"
+        if self.status and self.status >= 500:
+            return "provider"
+        if self.status is None:
+            return "network"
+        return "unknown"
 
 
 class LLMClient:
@@ -37,6 +59,7 @@ class LLMClient:
             ]
         self._models = [self.model] + [name for name in fallbacks if name != self.model]
         self._model_index = 0
+        self._downgraded_at: float | None = None
         self._client = httpx.AsyncClient(
             timeout=180, headers={"x-goog-api-key": self.api_key}
         )
@@ -78,16 +101,42 @@ class LLMClient:
             return False
         self._model_index += 1
         self.model = self._models[self._model_index]
+        if self._downgraded_at is None:
+            self._downgraded_at = time.monotonic()
         logger.warning("daily quota spent, switching to %s", self.model)
         return True
 
+    def _maybe_restore_primary(self) -> None:
+        """A daily quota clears at midnight, so a downgrade must not be permanent.
+
+        The client is shared by the whole process: without this, one user exhausting
+        the primary model leaves every later question on the weakest model in the
+        chain until the service is restarted.
+        """
+        if self._model_index == 0 or self._downgraded_at is None:
+            return
+        elapsed = time.monotonic() - self._downgraded_at
+        if elapsed < settings.llm_primary_retry_minutes * 60:
+            return
+        self._model_index = 0
+        self.model = self._models[0]
+        self._downgraded_at = None
+        logger.info("retrying primary model %s after backoff", self.model)
+
     def _record_usage(self, data: dict) -> None:
-        usage = data.get("usageMetadata") or {}
-        self.prompt_tokens += usage.get("promptTokenCount", 0)
-        self.output_tokens += usage.get("candidatesTokenCount", 0)
+        self._apply_usage(data.get("usageMetadata") or {})
+
+    def _apply_usage(self, metadata: dict) -> None:
+        prompt_tokens = metadata.get("promptTokenCount", 0)
+        output_tokens = metadata.get("candidatesTokenCount", 0)
+        self.prompt_tokens += prompt_tokens
+        self.output_tokens += output_tokens
+        # attributes the spend to whoever is being served right now
+        usage.record(self.model, prompt_tokens, output_tokens)
 
     async def _send(self, payload: dict) -> dict:
         """One request, with the retry and model-swap policy applied."""
+        self._maybe_restore_primary()
         last_error = ""
         for attempt in range(self.max_retries):
             try:
@@ -117,7 +166,9 @@ class LLMClient:
                 logger.warning("llm %s, retrying in %.1fs", response.status_code, delay)
                 await asyncio.sleep(delay)
                 continue
-            raise LLMError(f"generate failed {response.status_code}: {last_error}")
+            raise LLMError(
+                f"generate failed {response.status_code}: {last_error}", response.status_code
+            )
 
         raise LLMError(f"generate failed after {self.max_retries} attempts: {last_error}")
 
@@ -185,6 +236,7 @@ class LLMClient:
         extra_parts: list[dict] | None = None,
     ) -> AsyncIterator[str]:
         payload = self._payload(prompt, system, temperature, json_output=False, extra_parts=extra_parts)
+        self._maybe_restore_primary()
         last_error = ""
         for attempt in range(self.max_retries):
             async with self._client.stream(
@@ -194,6 +246,11 @@ class LLMClient:
                 json=payload,
             ) as response:
                 if response.status_code == 200:
+                    # every streamed chunk repeats usageMetadata, and the counts inside
+                    # it are cumulative for the whole call. Adding each one up charged a
+                    # single answer as if it had been generated dozens of times over, so
+                    # only the last report is applied, once the stream has finished
+                    final_usage: dict = {}
                     async for line in response.aiter_lines():
                         if not line.startswith("data:"):
                             continue
@@ -201,10 +258,12 @@ class LLMClient:
                         if not chunk or chunk == "[DONE]":
                             continue
                         data = json.loads(chunk)
-                        self._record_usage(data)
+                        if data.get("usageMetadata"):
+                            final_usage = data["usageMetadata"]
                         text = _first_text(data)
                         if text:
                             yield text
+                    self._apply_usage(final_usage)
                     return
 
                 body = (await response.aread()).decode("utf-8", "replace")
@@ -220,7 +279,9 @@ class LLMClient:
             if response.status_code in (500, 502, 503, 504):
                 await asyncio.sleep(min(2**attempt * 2, MAX_BACKOFF))
                 continue
-            raise LLMError(f"stream failed {response.status_code}: {last_error}")
+            raise LLMError(
+                f"stream failed {response.status_code}: {last_error}", response.status_code
+            )
 
         raise LLMError(f"stream failed after {self.max_retries} attempts: {last_error}")
 

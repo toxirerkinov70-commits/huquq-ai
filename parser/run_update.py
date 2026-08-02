@@ -174,7 +174,9 @@ def main() -> int:
     today = date.today().isoformat()
     registry = load_registry()
     by_doc = load_chunks_by_doc()
-    qdrant = QdrantClient(url=settings.qdrant_url, timeout=120)
+    qdrant = QdrantClient(
+        url=settings.qdrant_url, api_key=settings.qdrant_api_key or None, timeout=120
+    )
 
     report = {
         "new": [],

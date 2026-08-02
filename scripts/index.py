@@ -234,7 +234,9 @@ async def main_async(args: argparse.Namespace) -> int:
         chunks = chunks[: args.limit]
     logger.info("indexing %s chunks", len(chunks))
 
-    qdrant = QdrantClient(url=settings.qdrant_url, timeout=120)
+    qdrant = QdrantClient(
+        url=settings.qdrant_url, api_key=settings.qdrant_api_key or None, timeout=120
+    )
     ensure_collection(qdrant, settings.qdrant_collection, settings.embed_dim, args.recreate)
 
     async with get_embedding_client() as embedder:
