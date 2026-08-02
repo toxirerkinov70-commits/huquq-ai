@@ -137,9 +137,9 @@ birinchi mos kelganini qaytarsin.
 | 3.4 | **Kirill hujjatlar sinalmagan** | Transliteratsiya funksiyasi yozilgan, lekin **hech qachon ishlamagan**: 1 283 hujjatning hammasi lotin yozuvida chiqdi. Ya'ni bu kod yo'li tekshirilmagan. Test yozish uchun kirill-only hujjat topish kerak |
 | 3.5 | **To'lov integratsiyasi yo'q** | Buyurtma oqimi to'liq ishlaydi (muddat, chegirma, buyurtma raqami, faollashtirish), lekin bankdan "to'landi" signali yo'q — operator qo'lda tasdiqlaydi. Payme/Click callback'i `orders.activate` ni chaqirsa bas. Batafsil: [MONETIZATSIYA.md](MONETIZATSIYA.md) 5-bo'lim |
 | 3.8 | **SMS provayderi ulanmagan** | `SMS_PROVIDER=console` — kod jurnalga yoziladi. Eskiz uchun kod yozilgan, lekin hisob va shablon tasdig'i kerak. Production'da `console` **rad etiladi**, ya'ni ulanmasa ro'yxatdan o'tish ishlamaydi |
-| 3.9 | **Google tugmasi render bo'lmaydi** | Client ID olindi va `.env` ga yozildi, backend tomoni to'liq ishlaydi. Lekin GIS tugma endpointi 403 qaytaradi. O'lchov va sabab quyida |
+| 3.9 | Google orqali kirish | ✅ **ishlaydi** 2026-08-02 — popup oqimida, tirik hisob bilan tekshirildi. Yo'l nega o'zgartirilgani quyida |
 | 3.6 | **Huquqiy hujjatlar yurist tasdig'isiz** | `docs/legal/` dagi uch hujjat tizim amalda nima qilishiga muvofiq yozilgan, lekin **yuridik kuchga ega emas**. Ishga tushirishdan oldin yurist ko'rib chiqishi shart |
-| 3.7 | **Kechikish — 82 soniya** | Bitta savol uchun o'lchandi (2026-08-01, `mehnat` rejimi). Kvota cheklovi emas: jurnalda 429 yo'q. Sabab — CPU'da 5 ta embedding va 3 ta ketma-ket LLM chaqiruvi. Foydalanuvchi uchun bu **juda uzoq**. Choralar va ularning narxi: [MONETIZATSIYA.md](MONETIZATSIYA.md) 2.2-bo'lim. Eng foydalisi — rerank'ni lokal cross-encoder'ga o'tkazish (xarajat −60%, vaqt −15…25 s) |
+| 3.7 | **Kechikish — 82 soniya** | Bitta savol uchun o'lchandi (2026-08-01, `mehnat` rejimi). Kvota cheklovi emas: jurnalda 429 yo'q. Sabab — CPU'da 5 ta embedding va 3 ta ketma-ket LLM chaqiruvi. Foydalanuvchi uchun bu **juda uzoq**. Choralar va ularning narxi: [MONETIZATSIYA.md](MONETIZATSIYA.md) 2.2-bo'lim. Eng foydalisi — rerank'ni lokal cross-encoder'ga o'tkazish (xarajat −60%, vaqt −15…25 s). **2026-08-02 qayta o'lchov:** ikki savol `umumiy` rejimda 20.4 s va 23.7 s. Ya'ni 82 s har doimgi holat emas — lekin 20 s ham ko'p |
 
 ### 3.9 — Google kirishi: nima o'lchandi
 
@@ -166,6 +166,8 @@ qolmagan.
 tekshirilgan va **ishlaydigan** `storagerelay` redirect'idan foydalanadi. Backend endi
 ID token bilan bir qatorda access token'ni ham qabul qiladi va uni `tokeninfo` orqali
 tekshiradi (`aud` bizning klientmi — asosiy shart).
+
+Natija: 2026-08-02 da haqiqiy Google hisobi bilan kirish muvaffaqiyatli o'tdi.
 
 ---
 
@@ -194,9 +196,8 @@ Xavfsizlik va infratuzilma bandlari 2026-08-01 da yopildi. Qolgani — qidiruv s
 | 1 | 3.8 — SMS provayderini ulash (Eskiz) | Bo'lmasa hech kim ro'yxatdan o'ta olmaydi |
 | 2 | 3.7 — kechikishni tushirish (lokal rerank) | 82 s da foydalanuvchi kutmaydi. Xarajatni ham 60% kamaytiradi |
 | 3 | 3.6 — huquqiy hujjatlarni yurist tasdig'idan o'tkazish | Ishga tushirishdan oldin majburiy |
-| 4 | 3.9 — Google kirishini popup oqimida sinash | Console tomoni to'g'ri, `gsi/button` esa 403 beradi. Yechim yozildi, tirik hisob bilan sinash qoldi |
-| 3 | 1.3 — ikkinchi modda raqami | Sabab aniq, tuzatish kichik, natija darhol o'lchanadi |
-| 4 | 2.1 — eval yorliqlari ro'yxatga aylansin | Bu tuzatilmasa, keyingi o'lchovlar noto'g'ri xato ko'rsatib turaveradi |
-| 5 | 1.2 — so'zlashuv lug'ati | Eng ko'p foydalanuvchiga ta'sir qiladigan bo'shliq |
-| 6 | 1.4 va 1.5 — ko'p nishonli savollar | Savolni bo'lish kerak |
-| 7 | 1.1 — dense tomon | Eng qimmati (~3 soat qayta embedding), eng oxirida |
+| 4 | 1.3 — ikkinchi modda raqami | Sabab aniq, tuzatish kichik, natija darhol o'lchanadi |
+| 5 | 2.1 — eval yorliqlari ro'yxatga aylansin | Bu tuzatilmasa, keyingi o'lchovlar noto'g'ri xato ko'rsatib turaveradi |
+| 6 | 1.2 — so'zlashuv lug'ati | Eng ko'p foydalanuvchiga ta'sir qiladigan bo'shliq |
+| 7 | 1.4 va 1.5 — ko'p nishonli savollar | Savolni bo'lish kerak |
+| 8 | 1.1 — dense tomon | Eng qimmati (~3 soat qayta embedding), eng oxirida |

@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from qdrant_client.http.exceptions import ResponseHandlingException
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -130,6 +131,32 @@ async def feature_not_in_plan(request: Request, exc: usage.FeatureNotInPlan) -> 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limited(request: Request, exc: RateLimitExceeded):
     return _rate_limit_exceeded_handler(request, exc)
+
+
+@app.exception_handler(ResponseHandlingException)
+async def vector_store_unreachable(
+    request: Request, exc: ResponseHandlingException
+) -> JSONResponse:
+    """Qdrant being down is the one failure a generic message actively hides.
+
+    Every question that needs retrieval fails while small talk still answers, which reads
+    as an assistant that has become stupid rather than as a service that is not running.
+    """
+    logger.error("vector store unreachable", path=request.url.path, error=str(exc))
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": {
+                "error": "search_unavailable",
+                "message": (
+                    "Qidiruv bazasi javob bermayapti, shuning uchun savolga qonun "
+                    "matnlariga tayanib javob berib bo'lmadi. Qdrant ishga tushirilganini "
+                    "tekshiring (docker compose up -d)."
+                ),
+                "request_id": getattr(request.state, "request_id", None),
+            }
+        },
+    )
 
 
 @app.exception_handler(Exception)
