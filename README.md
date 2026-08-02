@@ -80,7 +80,7 @@ yoki bayrog'i elementlari qo'shilmaydi.
 
 | | | |
 |---|---|---|
-| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Kamchiliklar](KAMCHILIKLAR.md) · [Monetizatsiya](MONETIZATSIYA.md) |
+| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Production](PRODUCTION.md) · [Kamchiliklar](KAMCHILIKLAR.md) · [Monetizatsiya](MONETIZATSIYA.md) |
 | [1. Muammo va yechim](#1-muammo-va-yechim) | [7. Qidiruv quvuri](#7-qidiruv-quvuri) | [13. O'rnatish](#13-ornatish-va-ishga-tushirish) |
 | [2. Bir qarashda](#2-bir-qarashda) | [8. Javob generatsiyasi](#8-javob-generatsiyasi) | [14. Baholash](#14-baholash) |
 | [3. Arxitektura](#3-arxitektura) | [9. Agent rejimlari](#9-agent-rejimlari) | [15. Muhandislik qarorlari](#15-muhandislik-qarorlari) |
@@ -708,7 +708,11 @@ boshlab, lex.uz bloklardi.
 | 5 | `ENVIRONMENT=production` | Ogohlantirishlar va JSON logging |
 | 6 | `docs/legal/` yurist tasdig'idan o'tgan | Huquqiy xizmat, javobgarlik cheklovi kerak |
 | 7 | `SMS_PROVIDER=eskiz` va kalitlari to'ldirilgan | `console` da kod faqat jurnalga yoziladi. Production'da tizim buni **rad etadi** — ro'yxatdan o'tish ishlamaydi |
-| 8 | `GOOGLE_CLIENT_ID` to'ldirilgan | Bo'sh bo'lsa "Google orqali kirish" tugmasi ko'rsatilmaydi |
+| 8 | `GOOGLE_CLIENT_ID` to'ldirilgan | Bo'sh bo'lsa "Google orqali kirish" tugmasi ko'rsatilmaydi. Production domenini Google Cloud Console'dagi *Authorized JavaScript origins* ga qo'shishni unutmang |
+
+Bu jadval faqat sozlamalar haqida. Server, SMS, to'lov, yurist tasdig'i, monitoring va
+korpusning to'ldirilishi — ya'ni **ishga tushirish uchun qolgan hamma ish** —
+[PRODUCTION.md](PRODUCTION.md) da tartibi bilan yozilgan.
 
 ### Ro'yxatdan o'tishni sozlash
 
