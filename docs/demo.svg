@@ -2,16 +2,16 @@
   <title>Savoldan manbali javobgacha</title>
   <defs>
     <linearGradient id="d-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0A0F1D"/>
-      <stop offset="1" stop-color="#0E1530"/>
+      <stop offset="0" stop-color="#161514"/>
+      <stop offset="1" stop-color="#201E1D"/>
     </linearGradient>
     <linearGradient id="d-user" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3B5BFD"/>
-      <stop offset="1" stop-color="#6D4AEF"/>
+      <stop offset="0" stop-color="#0088B0"/>
+      <stop offset="1" stop-color="#0E93BA"/>
     </linearGradient>
     <linearGradient id="d-track" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#3B5BFD"/>
-      <stop offset="1" stop-color="#22D3EE"/>
+      <stop offset="0" stop-color="#0088B0"/>
+      <stop offset="1" stop-color="#62C5EE"/>
     </linearGradient>
     <clipPath id="d-card"><rect width="900" height="570" rx="18"/></clipPath>
     <filter id="d-glow" x="-80%" y="-80%" width="260%" height="260%">
@@ -88,19 +88,19 @@
 
   <g clip-path="url(#d-card)">
     <rect width="900" height="570" fill="url(#d-bg)"/>
-    <rect x="0.75" y="0.75" width="898.5" height="568.5" rx="17" fill="none" stroke="#25315C" stroke-width="1.5"/>
+    <rect x="0.75" y="0.75" width="898.5" height="568.5" rx="17" fill="none" stroke="#353130" stroke-width="1.5"/>
 
     <!-- title bar -->
-    <rect width="900" height="46" fill="#0B1226"/>
-    <line x1="0" y1="46" x2="900" y2="46" stroke="#222E56"/>
-    <circle cx="28" cy="23" r="5" fill="#F87171"/>
-    <circle cx="46" cy="23" r="5" fill="#FBBF24"/>
-    <circle cx="64" cy="23" r="5" fill="#4ADE80"/>
-    <text class="f" x="88" y="28" font-size="13.5" font-weight="600" fill="#8598C9">Huquq AI · umumiy rejim</text>
+    <rect width="900" height="46" fill="#1B1A19"/>
+    <line x1="0" y1="46" x2="900" y2="46" stroke="#332F2D"/>
+    <circle cx="28" cy="23" r="5" fill="#D9705F"/>
+    <circle cx="46" cy="23" r="5" fill="#D9A441"/>
+    <circle cx="64" cy="23" r="5" fill="#4FB89B"/>
+    <text class="f" x="88" y="28" font-size="13.5" font-weight="600" fill="#948F8B">Huquq AI · umumiy rejim</text>
     <g class="f" font-size="11.5" font-weight="700">
-      <rect x="762" y="12" width="112" height="23" rx="11.5" fill="#122A1E" stroke="#1F5138"/>
-      <circle cx="777" cy="23.5" r="3.5" fill="#4ADE80"/>
-      <text x="788" y="28" fill="#6EE7A8">grounded</text>
+      <rect x="762" y="12" width="112" height="23" rx="11.5" fill="#1C2422" stroke="#24403A"/>
+      <circle cx="777" cy="23.5" r="3.5" fill="#4FB89B"/>
+      <text x="788" y="28" fill="#69C7AC">grounded</text>
     </g>
 
     <g class="stage">
@@ -112,14 +112,14 @@
 
       <!-- pipeline strip -->
       <g class="f" font-size="12" font-weight="600">
-        <line x1="60" y1="145" x2="742" y2="145" stroke="#1E2A50" stroke-width="2"/>
+        <line x1="60" y1="145" x2="742" y2="145" stroke="#2E2B29" stroke-width="2"/>
         <g class="spark" filter="url(#d-glow)">
-          <circle cx="60" cy="145" r="6" fill="#7DD3FC"/>
+          <circle cx="60" cy="145" r="6" fill="#8AD8F5"/>
         </g>
         <g class="spark">
           <circle cx="60" cy="145" r="3.2" fill="#ffffff"/>
         </g>
-        <g fill="#141F45">
+        <g fill="#252322">
           <rect x="40" y="128" width="150" height="34" rx="17"/>
           <rect x="204" y="128" width="118" height="34" rx="17"/>
           <rect x="336" y="128" width="142" height="34" rx="17"/>
@@ -127,39 +127,39 @@
           <rect x="592" y="128" width="150" height="34" rx="17"/>
         </g>
         <g class="pill p1">
-          <rect x="40" y="128" width="150" height="34" rx="17" fill="#141F45" stroke="#3B5BFD"/>
-          <text x="115" y="150" fill="#B9C8F2" text-anchor="middle">modda detektori</text>
+          <rect x="40" y="128" width="150" height="34" rx="17" fill="#252322" stroke="#0088B0"/>
+          <text x="115" y="150" fill="#C4C0BC" text-anchor="middle">modda detektori</text>
         </g>
         <g class="pill p2">
-          <rect x="204" y="128" width="118" height="34" rx="17" fill="#141F45" stroke="#4F7BFF"/>
-          <text x="263" y="150" fill="#B9C8F2" text-anchor="middle">dense · e5</text>
+          <rect x="204" y="128" width="118" height="34" rx="17" fill="#252322" stroke="#1A9CC2"/>
+          <text x="263" y="150" fill="#C4C0BC" text-anchor="middle">dense · e5</text>
         </g>
         <g class="pill p3">
-          <rect x="336" y="128" width="142" height="34" rx="17" fill="#141F45" stroke="#22D3EE"/>
-          <text x="407" y="150" fill="#B9C8F2" text-anchor="middle">sparse · BM25</text>
+          <rect x="336" y="128" width="142" height="34" rx="17" fill="#252322" stroke="#62C5EE"/>
+          <text x="407" y="150" fill="#C4C0BC" text-anchor="middle">sparse · BM25</text>
         </g>
         <g class="pill p4">
-          <rect x="492" y="128" width="86" height="34" rx="17" fill="#141F45" stroke="#34D399"/>
-          <text x="535" y="150" fill="#B9C8F2" text-anchor="middle">RRF</text>
+          <rect x="492" y="128" width="86" height="34" rx="17" fill="#252322" stroke="#4FB89B"/>
+          <text x="535" y="150" fill="#C4C0BC" text-anchor="middle">RRF</text>
         </g>
         <g class="pill p5">
-          <rect x="592" y="128" width="150" height="34" rx="17" fill="#141F45" stroke="#A78BFA"/>
-          <text x="667" y="150" fill="#B9C8F2" text-anchor="middle">rerank → top-4</text>
+          <rect x="592" y="128" width="150" height="34" rx="17" fill="#252322" stroke="#62C5EE"/>
+          <text x="667" y="150" fill="#C4C0BC" text-anchor="middle">rerank → top-4</text>
         </g>
       </g>
 
       <!-- thinking dots -->
       <g class="thinkwrap">
-        <circle class="think" cx="790" cy="145" r="4.2" fill="#7E92C9"/>
-        <circle class="think th2" cx="808" cy="145" r="4.2" fill="#7E92C9"/>
-        <circle class="think th3" cx="826" cy="145" r="4.2" fill="#7E92C9"/>
+        <circle class="think" cx="790" cy="145" r="4.2" fill="#948F8B"/>
+        <circle class="think th2" cx="808" cy="145" r="4.2" fill="#948F8B"/>
+        <circle class="think th3" cx="826" cy="145" r="4.2" fill="#948F8B"/>
       </g>
 
       <!-- answer bubble -->
       <g class="abub">
-        <rect x="40" y="182" width="530" height="192" rx="15" fill="#111A34" stroke="#26325C"/>
-        <rect x="40" y="182" width="4" height="192" rx="2" fill="#3B5BFD"/>
-        <g class="f" font-size="16" fill="#D3DDF5">
+        <rect x="40" y="182" width="530" height="192" rx="15" fill="#242221" stroke="#353130"/>
+        <rect x="40" y="182" width="4" height="192" rx="2" fill="#0088B0"/>
+        <g class="f" font-size="16" fill="#DDD9D5">
           <text x="62" y="222" mask="url(#d-l1)" textLength="464" lengthAdjust="spacing">O'g'irlik — o'zganing mol-mulkini yashirincha talon-toroj qilish —</text>
           <text x="62" y="248" mask="url(#d-l2)" textLength="398" lengthAdjust="spacing">Jinoyat kodeksining 169-moddasi bilan tartibga solinadi.</text>
           <text x="62" y="274" mask="url(#d-l3)" textLength="430" lengthAdjust="spacing">Jazo qilmish belgilariga qarab jarimadan ozodlikdan mahrum</text>
@@ -171,47 +171,47 @@
 
       <!-- candidate funnel -->
       <g class="fpanel">
-        <rect x="596" y="182" width="266" height="192" rx="15" fill="#0E1730" stroke="#26325C"/>
-        <text class="f" x="618" y="210" font-size="11" font-weight="700" fill="#7E92C9" letter-spacing="1.8">NOMZODLAR</text>
-        <g class="f" font-size="12.5" fill="#9FB0DA">
+        <rect x="596" y="182" width="266" height="192" rx="15" fill="#201E1D" stroke="#353130"/>
+        <text class="f" x="618" y="210" font-size="11" font-weight="700" fill="#948F8B" letter-spacing="1.8">NOMZODLAR</text>
+        <g class="f" font-size="12.5" fill="#A8A39F">
           <text x="618" y="240">dense · e5</text>
-          <text x="840" y="240" font-weight="700" fill="#CBD8F5" text-anchor="end">20</text>
-          <rect x="618" y="248" width="222" height="4" rx="2" fill="#18234A"/>
-          <rect class="fbar f1" x="618" y="248" width="130" height="4" rx="2" fill="#4F7BFF"/>
+          <text x="840" y="240" font-weight="700" fill="#D6D2CE" text-anchor="end">20</text>
+          <rect x="618" y="248" width="222" height="4" rx="2" fill="#2A2726"/>
+          <rect class="fbar f1" x="618" y="248" width="130" height="4" rx="2" fill="#1A9CC2"/>
 
           <text x="618" y="278">sparse · BM25</text>
-          <text x="840" y="278" font-weight="700" fill="#CBD8F5" text-anchor="end">20</text>
-          <rect x="618" y="286" width="222" height="4" rx="2" fill="#18234A"/>
-          <rect class="fbar f2" x="618" y="286" width="130" height="4" rx="2" fill="#22D3EE"/>
+          <text x="840" y="278" font-weight="700" fill="#D6D2CE" text-anchor="end">20</text>
+          <rect x="618" y="286" width="222" height="4" rx="2" fill="#2A2726"/>
+          <rect class="fbar f2" x="618" y="286" width="130" height="4" rx="2" fill="#62C5EE"/>
 
           <text x="618" y="316">RRF birlashma</text>
-          <text x="840" y="316" font-weight="700" fill="#CBD8F5" text-anchor="end">20</text>
-          <rect x="618" y="324" width="222" height="4" rx="2" fill="#18234A"/>
-          <rect class="fbar f3" x="618" y="324" width="130" height="4" rx="2" fill="#34D399"/>
+          <text x="840" y="316" font-weight="700" fill="#D6D2CE" text-anchor="end">20</text>
+          <rect x="618" y="324" width="222" height="4" rx="2" fill="#2A2726"/>
+          <rect class="fbar f3" x="618" y="324" width="130" height="4" rx="2" fill="#4FB89B"/>
 
           <text x="618" y="354">rerank → javob</text>
-          <text x="840" y="354" font-weight="700" fill="#6EE7A8" text-anchor="end">4</text>
-          <rect x="618" y="362" width="222" height="4" rx="2" fill="#18234A"/>
-          <rect class="fbar f4" x="618" y="362" width="27" height="4" rx="2" fill="#A78BFA"/>
+          <text x="840" y="354" font-weight="700" fill="#69C7AC" text-anchor="end">4</text>
+          <rect x="618" y="362" width="222" height="4" rx="2" fill="#2A2726"/>
+          <rect class="fbar f4" x="618" y="362" width="27" height="4" rx="2" fill="#62C5EE"/>
         </g>
       </g>
 
       <!-- sources -->
-      <text class="f lbl" x="40" y="404" font-size="11.5" font-weight="700" fill="#7E92C9" letter-spacing="1.8">MANBALAR</text>
+      <text class="f lbl" x="40" y="404" font-size="11.5" font-weight="700" fill="#948F8B" letter-spacing="1.8">MANBALAR</text>
       <g class="src s1">
-        <rect x="40" y="416" width="822" height="46" rx="11" fill="#101830" stroke="#2A3760"/>
-        <text class="f" x="60" y="437" font-size="14" font-weight="700" fill="#8FB4FF">Jinoyat kodeksi · 169-modda</text>
-        <text class="f" x="60" y="453" font-size="12.5" fill="#7887B0">O'g'rilik · lex.uz/uz/docs/-111453#-263768</text>
-        <text class="f" x="838" y="444" font-size="14" fill="#5C6E9E" text-anchor="end">↗</text>
+        <rect x="40" y="416" width="822" height="46" rx="11" fill="#232120" stroke="#383433"/>
+        <text class="f" x="60" y="437" font-size="14" font-weight="700" fill="#62C5EE">Jinoyat kodeksi · 169-modda</text>
+        <text class="f" x="60" y="453" font-size="12.5" fill="#8C8783">O'g'rilik · lex.uz/uz/docs/-111453#-263768</text>
+        <text class="f" x="838" y="444" font-size="14" fill="#787471" text-anchor="end">↗</text>
       </g>
       <g class="src s2">
-        <rect x="40" y="470" width="822" height="46" rx="11" fill="#101830" stroke="#2A3760"/>
-        <text class="f" x="60" y="491" font-size="14" font-weight="700" fill="#8FB4FF">Jinoyat kodeksi · 54-modda</text>
-        <text class="f" x="60" y="507" font-size="12.5" fill="#7887B0">Jazo tayinlashning umumiy asoslari · lex.uz/uz/docs/-111453#-184674</text>
-        <text class="f" x="838" y="498" font-size="14" fill="#5C6E9E" text-anchor="end">↗</text>
+        <rect x="40" y="470" width="822" height="46" rx="11" fill="#232120" stroke="#383433"/>
+        <text class="f" x="60" y="491" font-size="14" font-weight="700" fill="#62C5EE">Jinoyat kodeksi · 54-modda</text>
+        <text class="f" x="60" y="507" font-size="12.5" fill="#8C8783">Jazo tayinlashning umumiy asoslari · lex.uz/uz/docs/-111453#-184674</text>
+        <text class="f" x="838" y="498" font-size="14" fill="#787471" text-anchor="end">↗</text>
       </g>
     </g>
 
-    <text class="f" x="450" y="546" font-size="12" fill="#5C6E9E" text-anchor="middle" font-style="italic">Javoblar tavsiyaviy xarakterga ega — aniq maslahat uchun yuristga murojaat qiling</text>
+    <text class="f" x="450" y="546" font-size="12" fill="#787471" text-anchor="middle" font-style="italic">Javoblar tavsiyaviy xarakterga ega — aniq maslahat uchun yuristga murojaat qiling</text>
   </g>
 </svg>

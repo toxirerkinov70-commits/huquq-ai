@@ -13,17 +13,18 @@ va har doim manba ko'rsatadi:** hujjat nomi, modda raqami va lex.uz havolasi.
 [![Gemini](https://img.shields.io/badge/Gemini-2.5%20Flash-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
-![korpus](https://img.shields.io/badge/korpus-1%20283%20hujjat-1f6feb?style=flat-square)
-![chunk](https://img.shields.io/badge/index-22%20513%20chunk-1f6feb?style=flat-square)
-![recall](https://img.shields.io/badge/recall@5-0.95-2da44e?style=flat-square)
-![recall10](https://img.shields.io/badge/recall@10-0.99-2da44e?style=flat-square)
-![mrr](https://img.shields.io/badge/MRR-0.780-2da44e?style=flat-square)
-![ram](https://img.shields.io/badge/RAM-8%20GB%20da%20ishlaydi-8250df?style=flat-square)
-[![license](https://img.shields.io/badge/litsenziya-MIT-24292f?style=flat-square)](LICENSE)
+![korpus](https://img.shields.io/badge/korpus-1%20283%20hujjat-0088B0?style=flat-square)
+![chunk](https://img.shields.io/badge/index-22%20513%20chunk-0088B0?style=flat-square)
+![recall](https://img.shields.io/badge/recall@5-0.95-3E9E82?style=flat-square)
+![recall10](https://img.shields.io/badge/recall@10-0.99-3E9E82?style=flat-square)
+![mrr](https://img.shields.io/badge/MRR-0.780-3E9E82?style=flat-square)
+![tests](https://img.shields.io/badge/testlar-205-3E9E82?style=flat-square)
+![ram](https://img.shields.io/badge/RAM-8%20GB%20da%20ishlaydi-201E1D?style=flat-square)
+[![license](https://img.shields.io/badge/litsenziya-MIT-201E1D?style=flat-square)](LICENSE)
 
 **[Qanday ishlaydi](#qanday-ishlaydi)** · **[Interfeys](#interfeys)** ·
 **[Nega gibrid](#4-nega-gibrid-qidiruv)** · **[Arxitektura](#3-arxitektura)** ·
-**[O'rnatish](#13-ornatish-va-ishga-tushirish)** · **[Kamchiliklar](KAMCHILIKLAR.md)**
+**[O'rnatish](#13-ornatish-va-ishga-tushirish)** · **[Cheklovlar](#17-cheklovlar)**
 
 </div>
 
@@ -31,9 +32,10 @@ va har doim manba ko'rsatadi:** hujjat nomi, modda raqami va lex.uz havolasi.
 
 ## Qanday ishlaydi
 
-Savol yoziladi → modda raqami va hujjat nomi detektorlari ishga tushadi → vektor va
-BM25 qidiruvi **parallel** ketadi → RRF birlashtiradi → LLM saralaydi → javob **faqat**
-topilgan modda matniga tayanib yoziladi.
+Savol yoziladi → **avval u tushuniladi**: bu huquqiy savolmi, oddiy suhbatmi yoki hujjat
+so'rovimi → huquqiy bo'lsa modda raqami va hujjat nomi detektorlari ishga tushadi →
+vektor va BM25 qidiruvi **parallel** ketadi → RRF birlashtiradi → LLM saralaydi → javob
+**faqat** topilgan modda matniga tayanib yoziladi.
 
 <div align="center">
   <img src="docs/demo.svg" alt="Savoldan manbali javobgacha" width="94%">
@@ -53,11 +55,27 @@ prompt'da emas:
 ## Interfeys
 
 <div align="center">
-  <img src="docs/ui-tour.gif" alt="Huquq AI interfeysi — suhbat, manbalar, qidiruv, agentik rejim" width="94%">
+  <img src="docs/ui-answer.png" alt="Manbali javob: har bir da'vo yonida modda va lex.uz havolasi" width="94%">
 </div>
 
-Vanilla JS, build qadamisiz, 813 qator: SSE streaming, yorug'/qorong'i tema, suhbat
-tarixi, hujjat yuklash, manbani bosganda modda to'liq matni modal'da ochiladi.
+Har javob ostida manbalar turadi — hujjat nomi, modda raqami va lex.uz havolasi.
+Bosilganda modda to'liq matni modal'da ochiladi. Yuqoridagi javobda tizim savolning
+bir qismiga norma topa olmaganini ham **ochiq aytgan** — bu xato emas, talab.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/ui-welcome.png" alt="Kirish ekrani"></td>
+<td width="50%"><img src="docs/ui-search.png" alt="Hujjatlar bo'yicha qidiruv"></td>
+</tr>
+<tr>
+<td align="center"><sub>Google yoki telefon orqali kirish</sub></td>
+<td align="center"><sub>Hujjatlar reyestri bo'yicha qidiruv</sub></td>
+</tr>
+</table>
+
+Vanilla JS, build qadamisiz: SSE streaming, yorug'/qorong'i tema, suhbat tarixi, hujjat
+yuklash, agent rejimlari, o'zbek va rus tili. Hujjat tayyorlash oynasi —
+[8.1-bo'limda](#81-hujjat-tayyorlash).
 
 ### Brend
 
@@ -80,12 +98,12 @@ yoki bayrog'i elementlari qo'shilmaydi.
 
 | | | |
 |---|---|---|
-| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Production](PRODUCTION.md) · [Kamchiliklar](KAMCHILIKLAR.md) · [Monetizatsiya](MONETIZATSIYA.md) |
+| [Qanday ishlaydi](#qanday-ishlaydi) | [Interfeys](#interfeys) | [Brend](#brend) · [Cheklovlar](#17-cheklovlar) |
 | [1. Muammo va yechim](#1-muammo-va-yechim) | [7. Qidiruv quvuri](#7-qidiruv-quvuri) | [13. O'rnatish](#13-ornatish-va-ishga-tushirish) |
 | [2. Bir qarashda](#2-bir-qarashda) | [8. Javob generatsiyasi](#8-javob-generatsiyasi) | [14. Baholash](#14-baholash) |
 | [3. Arxitektura](#3-arxitektura) | [9. Agent rejimlari](#9-agent-rejimlari) | [15. Muhandislik qarorlari](#15-muhandislik-qarorlari) |
 | [4. Nega gibrid qidiruv](#4-nega-gibrid-qidiruv) | [10. Agentik rejim](#10-agentik-rejim--tool-calling) | [16. Repozitoriy xaritasi](#16-repozitoriy-xaritasi) |
-| [5. Korpus](#5-korpus) | [11. Avtomatik yangilanish](#11-avtomatik-yangilanish) | [17. Kamchiliklar](#17-kamchiliklar) |
+| [5. Korpus](#5-korpus) | [11. Avtomatik yangilanish](#11-avtomatik-yangilanish) | [17. Cheklovlar](#17-cheklovlar) |
 | [6. Ma'lumot quvuri](#6-malumot-quvuri) | [12. API](#12-api) | [18. Hissa qo'shganlar](#18-hissa-qoshganlar) |
 
 ---
@@ -122,7 +140,9 @@ kodda `coverage.py` moduli orqali hisoblanadi
 | Qiyin to'plamda recall@5 | **0.77** (22 savol) |
 | Agent rejimlari | 7 ta |
 | LLM vositalari (function calling) | 5 ta |
-| Kod hajmi | ~7 700 qator (backend, parser, frontend) |
+| Tayyorlanadigan hujjat turlari | 5 ta + slaydlar |
+| Testlar | **205 ta** (pytest, GitHub Actions) |
+| Kod hajmi | ~10 000 qator (backend, parser, frontend) |
 | Ishlash muhiti | 8 GB RAM li noutbuk |
 
 Bularning hammasi **bitta noutbukda** ishlaydi: Qdrant 2 GB, backend 3 GB xotira
@@ -182,7 +202,7 @@ flowchart LR
 | Metadata | **SQLite** | Suhbat tarixi; prod uchun Postgres'ga o'tish oson |
 | Backend | **FastAPI + Uvicorn**, to'liq async | SSE streaming, `asyncio.gather` bilan parallel qidiruv |
 | Parser | **httpx + selectolax** | `BeautifulSoup` dan sezilarli tez |
-| Frontend | **Vanilla JS + SSE** | Framework'siz, build qadamisiz, 813 qator |
+| Frontend | **Vanilla JS + SSE** | Framework'siz, build qadamisiz, ~2 800 qator |
 
 ---
 
@@ -332,7 +352,37 @@ Uchta muhim tafsilot:
 ## 7. Qidiruv quvuri
 
 Savoldan javobgacha to'qqiz bosqich. Uchtasi — 7.2, 7.4, 7.5 — mahsulot sifatini
-o'lchanadigan darajada o'zgartirgan qarorlar.
+o'lchanadigan darajada o'zgartirgan qarorlar. Lekin ulardan oldin bitta savol turadi:
+**bu umuman qidiruv talab qiladimi?**
+
+### 7.0 Savolni tushunish
+
+Avval yo'naltirish oddiy regex ro'yxati edi va u yiqildi. "Sen nimaga qodirsan" degan
+savol korpusga tushib, Mehnat kodeksining moddalari bilan javob qaytardi — noto'g'ri
+javob, ustiga manba ilova qilingan holda. Ro'yxatga yangi ibora qo'shish yordam
+bermaydi: odam har safar boshqacha yozadi.
+
+Endi savol avval **toifalanadi**:
+
+| Toifa | Nima bo'ladi |
+|---|---|
+| `suhbat` | Salomlashish, minnatdorchilik, "nima qila olasan" — odamdek javob, qidiruvsiz |
+| `huquqiy` | To'liq quvur: qidiruv, rerank, manbali javob |
+| `hujjat` | Qidiruv + hujjat yoki slayd tuzish ([8.1](#81-hujjat-tayyorlash)) |
+| `hisob` | Foydalanuvchining o'z tarifi — modelga umuman chiqmaydi |
+| `tashqari` | Ob-havo, sport, dasturlash — bir jumlada ayt va nima bilan yordam bera olishingni taklif qil |
+
+Naqshlar saqlanib qoldi, lekin endi **tezkor yo'l** sifatida: salomlashish, modda
+raqami, hujjat so'rovi — bular tarmoqqa chiqmasdan hal bo'ladi. Faqat naqsh hal qila
+olmagan savol modelga boradi.
+
+Ikkita qoida muhim. Klassifikator **xato qilsa yoki umuman ishlamasa — savol huquqiy
+deb qabul qilinadi**: haqiqiy huquqiy savolga suhbat ohangida javob berish teskarisidan
+yomonroq. Va kunlik chegara toifalashdan **keyin** yechiladi, chunki xabar nimaga
+turishi u nima ekanligi aniqlangandan keyin ma'lum bo'ladi.
+
+Natija o'lchanadi: suhbat savoli endi **2-3 soniyada** javob oladi (ilgari 20+ s,
+chunki butun qidiruv quvuri ishlab chiqardi) va manbalar ilova qilinmaydi.
 
 ```mermaid
 flowchart TD
@@ -484,8 +534,38 @@ Uch qo'shimcha mexanizm prompt'ni **kod bilan** mustahkamlaydi:
 Disclaimer modeldan emas, **interfeysdan** keladi — har javob ostida alohida blok
 sifatida, model uni yozmaydi.
 
-Salomlashish va "nima qila olasan?" turidagi meta-savollar retrieval'ni butunlay
-chetlab o'tadi — ular "topilmadi" javobini olmasligi kerak.
+### 8.1 Hujjat tayyorlash
+
+Qaysi modda tegishli ekanini bilish — kerak bo'lgan narsaning yarmi. Ikkinchi yarmi —
+kerakli idoraga yozilgan qog'oz. Shuning uchun "ishga tiklash bo'yicha da'vo arizasi
+yozib ber" degan so'rov javob emas, **hujjat** qaytaradi.
+
+<div align="center">
+  <img src="docs/ui-draft.png" alt="Tayyorlangan da'vo arizasi — PDF va PNG tugmalari bilan" width="94%">
+</div>
+
+Ikki xil chiqish bor:
+
+| Turi | Nima chiqadi |
+|---|---|
+| **Hujjat** | Ariza, shikoyat, da'vo arizasi, tushuntirish xati, bayonot — kimga/kimdan, matn, "So'rayman" bandlari, huquqiy asos va ilovalar bilan |
+| **Slaydlar** | Mavzu bo'yicha 4-6 slayd: tushuncha, asosiy normalar, tartib, amaliy xulosa |
+
+Ikkalasi ham **o'sha topilgan moddalar ustiga** quriladi — javoblar qaysi kontekstga
+tayansa, hujjat ham o'shanga tayanadi.
+
+**Bo'sh joy to'ldirilmaydi.** Foydalanuvchi aytmagan ism, sana yoki summa `[F.I.Sh.]`,
+`[sana]` ko'rinishida kvadrat qavsda qoladi va suhbatda ro'yxat qilib qaytariladi.
+Sudga mo'ljallangan hujjatda o'ylab topilgan manzil — ochiq-oydin tugallanmagan
+hujjatdan yomonroq.
+
+**Yuklab olish brauzerda bajariladi.** PDF — brauzerning o'z chop etish quvuri orqali,
+ya'ni matn tanlanadigan bo'lib qoladi. PNG esa canvas ustiga **qo'lda chiziladi**:
+sahifa boshqa hostdan kutubxona yuklay olmaydi (CSP), va qo'lda chizish hujjatga
+idora kutadigan chekka va tipografikani saqlab qolish imkonini beradi.
+
+Hujjat tuzilmasa, savol oddiy javob sifatida ishlanadi — nosozlik foydalanuvchining
+hujjatiga tushsin, javobiga emas.
 
 ---
 
@@ -659,11 +739,16 @@ Himoya: hisob bo'yicha rate limiting, so'rov hajmi chegarasi, `X-Request-ID` bil
 strukturalangan logging, har so'rov uchun latency va **foydalanuvchi bo'yicha** token
 va xarajat hisobi.
 
-**SSE oqimi:** `meta` → `token`×N → `sources` → `done`. Manbalar oxirida bitta event
-sifatida yuboriladi, chunki ular javob matni yozilgandan **keyin** filtrlanadi. `done`
-eventi qolgan kvotani ham olib keladi.
+**SSE oqimi:** `meta` → `token`×N → (`document`) → `sources` → `done`. Manbalar oxirida
+bitta event sifatida yuboriladi, chunki ular javob matni yozilgandan **keyin**
+filtrlanadi. `document` faqat hujjat yoki slayd so'ralganda keladi — u bitta JSON
+obyekti, oqim bilan bo'lib yuborishning ma'nosi yo'q. `done` eventi qolgan kvotani ham
+olib keladi.
 
-Tariflar, chegaralar va daromad tuzilmasi: **[MONETIZATSIYA.md](MONETIZATSIYA.md)**.
+**Tariflar — namoyish uchun.** Rejalar, kunlik chegaralar, buyurtma oqimi va operator
+paneli to'liq ishlaydi, lekin **to'lov tizimi ulanmagan** va ulanmaydi ham: bu loyiha
+sotuvga chiqarilmaydi. Interfeysda ham shu ochiq yozilgan — narx ko'rsatilib, uni
+to'lash yo'li yo'qligini aytmaslik foydalanuvchini aldash bo'lardi.
 
 ---
 
@@ -710,9 +795,9 @@ boshlab, lex.uz bloklardi.
 | 7 | `SMS_PROVIDER=eskiz` va kalitlari to'ldirilgan | `console` da kod faqat jurnalga yoziladi. Production'da tizim buni **rad etadi** — ro'yxatdan o'tish ishlamaydi |
 | 8 | `GOOGLE_CLIENT_ID` to'ldirilgan | Bo'sh bo'lsa "Google orqali kirish" tugmasi ko'rsatilmaydi. Production domenini Google Cloud Console'dagi *Authorized JavaScript origins* ga qo'shishni unutmang |
 
-Bu jadval faqat sozlamalar haqida. Server, SMS, to'lov, yurist tasdig'i, monitoring va
-korpusning to'ldirilishi — ya'ni **ishga tushirish uchun qolgan hamma ish** —
-[PRODUCTION.md](PRODUCTION.md) da tartibi bilan yozilgan.
+Bu jadval faqat sozlamalar haqida. Tizim haqiqiy foydalanuvchilarga ochilmaydi, shuning
+uchun SMS provayderi, to'lov, yurist tasdig'i va monitoring qilinmagan — nima
+qilinmagani [17-bo'limda](#17-cheklovlar) ochiq sanab o'tilgan.
 
 ### Ro'yxatdan o'tishni sozlash
 
@@ -724,9 +809,13 @@ ni `.env` dagi `GOOGLE_CLIENT_ID` ga yozing. Client secret kerak emas.
 
 Kirish **popup oqimida** ishlaydi (`google.accounts.oauth2.initTokenClient`): brauzer
 access token oladi, backend uni Google'ning `tokeninfo` endpointida tekshiradi —
-avvalo token **aynan shu klient uchun** berilganini. Google'ning o'zi render qiladigan
-"Sign in with Google" tugmasi ishlatilmaydi, sababi [KAMCHILIKLAR.md](KAMCHILIKLAR.md)
-3.9-bandida yozilgan.
+avvalo token **aynan shu klient uchun** berilganini.
+
+Google'ning o'zi render qiladigan "Sign in with Google" tugmasi ishlatilmaydi. Bu
+klient uchun Google tugma endpointiga **403** qaytaradi (`The given origin is not
+allowed`), ayni paytda **o'sha origin**dan kelgan popup so'rovini qabul qiladi va
+kirish sahifasiga o'tkazadi. Ikkalasi ham o'lchandi, Console tomonida qo'shiladigan
+sozlama qolmadi — shuning uchun ishlaydigan yo'l tanlandi.
 
 **SMS.** [eskiz.uz](https://eskiz.uz) da hisob oching, `ESKIZ_EMAIL` va
 `ESKIZ_PASSWORD` ni to'ldiring, `SMS_PROVIDER=eskiz` qo'ying. Xabar shabloni
@@ -750,7 +839,7 @@ cp .env.example .env                   # GEMINI_API_KEY ni to'ldiring
 docker compose up -d qdrant            # dev'da faqat Qdrant konteynerda
 
 uvicorn backend.app.main:app --reload
-pytest                                 # 72 ta test
+pytest                                 # 205 ta test
 ```
 
 Windows uchun tayyor skript: `.\start.ps1` — port bandligini, Qdrant holatini va
@@ -793,8 +882,7 @@ python scripts/export_corpus.py     # boshqa mashinaga ko'chirish uchun arxiv
 
 `backup.py` Qdrant snapshot, SQLite dump va reyestr nusxasini `data/backups/{sana}/`
 ga yozadi, oxirgi 5 tasini saqlaydi. Har kuni yangilanishdan **oldin** avtomatik
-ishlaydi. `backup.sh` shu skriptga yo'naltiruvchi qobiq — eski odatlar buzilmasligi
-uchun qoldirilgan.
+ishlaydi.
 
 ---
 
@@ -903,6 +991,8 @@ huquqiy-rag/
 │   │   ├── search.py            debug qidiruv, hujjatlar reyestri
 │   │   └── updates.py           yangilanish hisobotlari
 │   ├── services/
+│   │   ├── intent.py            savolni toifalash: suhbat / huquq / hujjat / hisob
+│   │   ├── drafting.py          ariza, shikoyat, da'vo va slaydlar tuzish
 │   │   ├── retrieval.py         dense, sparse, RRF, salvage, modda detektori
 │   │   ├── sparse.py            BM25, n-gramma, sarlavha og'irligi
 │   │   ├── coverage.py          "bazada bunday tushuncha bormi?"
@@ -940,7 +1030,7 @@ huquqiy-rag/
 │   ├── export_corpus.py         korpusni arxivga yig'ish (deploy uchun)
 │   ├── import_corpus.py         arxivni yangi mashinaga tiklash
 │   └── ui_check.py              Playwright UI sinovlari (12 tekshiruv)
-├── tests/                       72 ta birlik va API testi (pytest)
+├── tests/                       205 ta birlik va API testi (pytest)
 ├── docs/legal/                  oferta, maxfiylik, saqlash siyosati
 ├── deploy/Caddyfile             TLS, xavfsizlik sarlavhalari, SSE proksi
 ├── eval/
@@ -948,28 +1038,68 @@ huquqiy-rag/
 │   ├── hard_questions.jsonl     22 savol — chegaralar va halollik
 │   ├── hard_questions.md        qiyin to'plam tavsifi
 │   └── run.py                   recall@5, recall@10, MRR
-├── frontend/                    vanilla JS chat (SSE, markdown, temalar, uz/ru)
+├── frontend/
+│   ├── app.js                   chat, SSE, markdown, temalar, uz/ru
+│   ├── auth.js                  Google popup oqimi, telefon + SMS kodi
+│   ├── draft.js                 hujjat va slaydlarni ko'rsatish, PDF va PNG
+│   └── logo.svg, favicon.svg    brend belgisi
 ├── data/                        gitignore — korpus, index, keshlar
 ├── docker-compose.yml           qdrant + backend + scheduler
-├── docker-compose.prod.yml      Caddy, ko'p worker, JSON logging
-├── MONETIZATSIYA.md             tariflar, birlik iqtisodiyoti, daromad rejasi
-└── KAMCHILIKLAR.md              ochiq muammolar
+└── docker-compose.prod.yml      Caddy, ko'p worker, JSON logging
 ```
 
 ---
 
-## 17. Kamchiliklar
+## 17. Cheklovlar
 
-Tizimning zaif joylari va ularning sabablari alohida faylda ochiq yozilgan:
+Bu loyiha ishlaydi, lekin hamma narsani qila olmaydi. Quyidagilar taxmin emas —
+o'lchangan va sababi aniqlangan.
 
-### → [KAMCHILIKLAR.md](KAMCHILIKLAR.md)
+### Qidiruv sifati
 
-Qisqacha: dense tomon jadvalli moddalarda ko'r, so'zlashuv tilidan huquqiy atamaga
-o'tish bo'shlig'i bor, bitta savolda ikkita modda raqami bo'lsa ikkinchisi yo'qoladi,
-LLM bepul tarifi kuniga ~120 so'rov bilan cheklangan.
+| Nima | Dalil | Sabab |
+|---|---|---|
+| **Dense tomon jadvalli moddalarda ko'r** | dense `recall@5 = 0.52`, gibrid `0.95` | Raqamlarga to'la moddaning o'rtacha vektori mavzuni ifodalamaydi. Sparse tomon qoplaydi |
+| **So'zlashuv tili → huquqiy atama** | qiyin to'plamda `recall@5 = 0.33` | "Meni ishdan haydashdi" va "mehnat shartnomasini qonunga xilof bekor qilish" bir-biriga na so'z, na vektor jihatidan yaqin. Sinonim lug'ati kerak |
+| **Bitta savolda ikkita modda raqami** | `superscript` to'plamida `0.67` | `detect_article_no()` `search()` ishlatadi va faqat birinchisini oladi |
+| **Ikki kodeks chegarasidagi savol** | `cross_code` va `multipart` — `0.00` | Bitta qidiruv ikkala nishonni yuqoriga chiqara olmaydi. Savolni bo'lish kerak; agentik rejim buni qila oladi, standart quvur yo'q |
 
-Xavfsizlik va infratuzilma bandlari 2026-08-01 auditida yopildi — o'sha faylning
-0-bo'limida ro'yxati bor.
+Sinab ko'rilgan va **yordam bermagan** (qaytarmang): fusion havzasini chuqurlashtirish
+(20 → 400) — recall o'zgarmadi; `RRF_K` ni 60 → 3 — bittasini tuzatib boshqasini buzdi;
+hujjat bo'yicha chunk cheklovi — recall 0.96 dan **0.91 ga tushdi**.
+
+### Korpus
+
+1 283 hujjat: Konstitutsiya, 20 kodeks, 562 qonun va 700 ta sud amaliyoti hujjati.
+**Yo'q:** prezident hujjatlari, hukumat qarorlari, idoraviy va xalqaro hujjatlar.
+Amaliy savollarning bir qismi aynan nizom va tartiblarga tayanadi, ular hukumat
+qarorlarida — ya'ni tizim ba'zan "bazada topilmadi" deydi, holbuki norma mavjud.
+
+Qo'shish yo'li ochiq (`--group N`), lekin narxi bor: `Crawl-delay: 20` va CPU'da
+~2 chunk/s embedding. Katta guruhlar bir necha kun oladi.
+
+### Tashqi cheklovlar
+
+| Cheklov | Ta'siri |
+|---|---|
+| **LLM bepul tarifi** | Model boshiga ~20 so'rov/kun. Bitta savol 2-4 so'rov yeydi → **~40 savol/kun**. Kod tomondan qilingani: 6 modelli fallback va `ENABLE_QUERY_EXPANSION` / `ENABLE_RERANK` o'chirgichlari |
+| **Kechikish** | Oddiy savol 20-25 s, vaziyat bayoni 45 s gacha. Sabab — CPU'da bir nechta embedding va ketma-ket LLM chaqiruvlari. Suhbat savoli 2-3 s (qidiruvga umuman chiqmaydi) |
+| **8 GB RAM** | Backend va indexatsiya birga sig'maydi — har indexatsiyada konteynerni to'xtatish kerak |
+| **lex.uz `Crawl-delay: 20`** | Bitta hujjat 20 soniya. Tezlashtirish IP blokga olib keladi |
+| **Korpusda rus tili yo'q** | `lang=4` (o'zbek lotin) olingan. Rus savol ko'p tilli embedding orqali topiladi, sparse tomon esa ishlamaydi — gibridning yarmi yo'qoladi |
+
+### Ishga tushirish uchun qilinmagan
+
+Tizim ataylab ochiq internetga chiqarilmagan. Shuning uchun: SMS provayderi ulanmagan
+(`SMS_PROVIDER=console`), to'lov integratsiyasi yo'q, `docs/legal/` dagi hujjatlar
+yurist tasdig'idan o'tmagan, monitoring va ogohlantirish yo'q, metadata bazasi hali
+SQLite. Kod bularning hammasiga tayyor — ulanmagani qaror, kamchilik emas.
+
+### Sinalmagan yo'llar
+
+Kirill hujjatlar uchun transliteratsiya funksiyasi yozilgan, lekin **hech qachon
+ishlamagan**: 1 283 hujjatning hammasi lotin yozuvida chiqdi. Ya'ni bu kod yo'li
+tekshirilmagan.
 
 ---
 

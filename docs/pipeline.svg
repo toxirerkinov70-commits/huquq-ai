@@ -2,13 +2,13 @@
   <title>Korpus quvuri</title>
   <defs>
     <linearGradient id="p-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0A0F1D"/>
-      <stop offset="1" stop-color="#0D1428"/>
+      <stop offset="0" stop-color="#161514"/>
+      <stop offset="1" stop-color="#1D1B1A"/>
     </linearGradient>
     <linearGradient id="p-line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#3B5BFD"/>
-      <stop offset="0.5" stop-color="#22D3EE"/>
-      <stop offset="1" stop-color="#4ADE80"/>
+      <stop offset="0" stop-color="#0088B0"/>
+      <stop offset="0.5" stop-color="#62C5EE"/>
+      <stop offset="1" stop-color="#4FB89B"/>
     </linearGradient>
     <clipPath id="p-card"><rect width="900" height="200" rx="18"/></clipPath>
     <filter id="p-glow" x="-100%" y="-100%" width="300%" height="300%">
@@ -36,62 +36,62 @@
 
   <g clip-path="url(#p-card)">
     <rect width="900" height="200" fill="url(#p-bg)"/>
-    <rect x="0.75" y="0.75" width="898.5" height="198.5" rx="17" fill="none" stroke="#25315C" stroke-width="1.5"/>
+    <rect x="0.75" y="0.75" width="898.5" height="198.5" rx="17" fill="none" stroke="#353130" stroke-width="1.5"/>
 
-    <text class="f" x="40" y="40" font-size="15" font-weight="700" fill="#C6D4F5">Korpus quvuri</text>
-    <text class="f" x="158" y="40" font-size="12.5" fill="#63769F">lex.uz → HTML → Markdown → chunk → vektor</text>
+    <text class="f" x="40" y="40" font-size="15" font-weight="700" fill="#CFCBC7">Korpus quvuri</text>
+    <text class="f" x="158" y="40" font-size="12.5" fill="#7C7875">lex.uz → HTML → Markdown → chunk → vektor</text>
 
-    <line x1="90" y1="104" x2="730" y2="104" stroke="#1D2A50" stroke-width="3" stroke-linecap="round"/>
+    <line x1="90" y1="104" x2="730" y2="104" stroke="#2E2B29" stroke-width="3" stroke-linecap="round"/>
     <line class="prog" x1="90" y1="104" x2="730" y2="104" stroke="url(#p-line)" stroke-width="3" stroke-linecap="round"/>
 
     <g class="f" font-size="12" font-weight="600" text-anchor="middle">
       <g class="node n1">
-        <circle cx="90" cy="104" r="13" fill="#111B38" stroke="#3B5BFD" stroke-width="2"/>
-        <circle cx="90" cy="104" r="4.5" fill="#3B5BFD"/>
-        <text x="90" y="80" fill="#B8C7EE">lex.uz</text>
-        <text x="90" y="138" font-size="11" font-weight="400" fill="#63769F">robots.txt · 20 s</text>
+        <circle cx="90" cy="104" r="13" fill="#201E1D" stroke="#0088B0" stroke-width="2"/>
+        <circle cx="90" cy="104" r="4.5" fill="#0088B0"/>
+        <text x="90" y="80" fill="#C4C0BC">lex.uz</text>
+        <text x="90" y="138" font-size="11" font-weight="400" fill="#7C7875">robots.txt · 20 s</text>
       </g>
       <g class="node n2">
-        <circle cx="218" cy="104" r="13" fill="#111B38" stroke="#4B6BFF" stroke-width="2"/>
-        <circle cx="218" cy="104" r="4.5" fill="#4B6BFF"/>
-        <text x="218" y="80" fill="#B8C7EE">discover</text>
-        <text x="218" y="138" font-size="11" font-weight="400" fill="#63769F">1 283 hujjat</text>
+        <circle cx="218" cy="104" r="13" fill="#201E1D" stroke="#0E93BA" stroke-width="2"/>
+        <circle cx="218" cy="104" r="4.5" fill="#0E93BA"/>
+        <text x="218" y="80" fill="#C4C0BC">discover</text>
+        <text x="218" y="138" font-size="11" font-weight="400" fill="#7C7875">1 283 hujjat</text>
       </g>
       <g class="node n3">
-        <circle cx="346" cy="104" r="13" fill="#111B38" stroke="#20B8E0" stroke-width="2"/>
-        <circle cx="346" cy="104" r="4.5" fill="#20B8E0"/>
-        <text x="346" y="80" fill="#B8C7EE">fetch</text>
-        <text x="346" y="138" font-size="11" font-weight="400" fill="#63769F">raw/*.html</text>
+        <circle cx="346" cy="104" r="13" fill="#201E1D" stroke="#3FAFD6" stroke-width="2"/>
+        <circle cx="346" cy="104" r="4.5" fill="#3FAFD6"/>
+        <text x="346" y="80" fill="#C4C0BC">fetch</text>
+        <text x="346" y="138" font-size="11" font-weight="400" fill="#7C7875">raw/*.html</text>
       </g>
       <g class="node n4">
-        <circle cx="474" cy="104" r="13" fill="#111B38" stroke="#22D3EE" stroke-width="2"/>
-        <circle cx="474" cy="104" r="4.5" fill="#22D3EE"/>
-        <text x="474" y="80" fill="#B8C7EE">extract</text>
-        <text x="474" y="138" font-size="11" font-weight="400" fill="#63769F">markdown/*.md</text>
+        <circle cx="474" cy="104" r="13" fill="#201E1D" stroke="#62C5EE" stroke-width="2"/>
+        <circle cx="474" cy="104" r="4.5" fill="#62C5EE"/>
+        <text x="474" y="80" fill="#C4C0BC">extract</text>
+        <text x="474" y="138" font-size="11" font-weight="400" fill="#7C7875">markdown/*.md</text>
       </g>
       <g class="node n5">
-        <circle cx="602" cy="104" r="13" fill="#111B38" stroke="#34D399" stroke-width="2"/>
-        <circle cx="602" cy="104" r="4.5" fill="#34D399"/>
-        <text x="602" y="80" fill="#B8C7EE">chunk</text>
-        <text x="602" y="138" font-size="11" font-weight="400" fill="#63769F">22 513 modda</text>
+        <circle cx="602" cy="104" r="13" fill="#201E1D" stroke="#4FB89B" stroke-width="2"/>
+        <circle cx="602" cy="104" r="4.5" fill="#4FB89B"/>
+        <text x="602" y="80" fill="#C4C0BC">chunk</text>
+        <text x="602" y="138" font-size="11" font-weight="400" fill="#7C7875">22 513 modda</text>
       </g>
       <g class="node n6">
-        <circle cx="730" cy="104" r="13" fill="#111B38" stroke="#4ADE80" stroke-width="2"/>
-        <circle cx="730" cy="104" r="4.5" fill="#4ADE80"/>
-        <text x="730" y="80" fill="#B8C7EE">index</text>
-        <text x="730" y="138" font-size="11" font-weight="400" fill="#63769F">dense + sparse</text>
+        <circle cx="730" cy="104" r="13" fill="#201E1D" stroke="#4FB89B" stroke-width="2"/>
+        <circle cx="730" cy="104" r="4.5" fill="#4FB89B"/>
+        <text x="730" y="80" fill="#C4C0BC">index</text>
+        <text x="730" y="138" font-size="11" font-weight="400" fill="#7C7875">dense + sparse</text>
       </g>
     </g>
 
     <g class="dot">
-      <circle cx="90" cy="104" r="7" fill="#8AE6FF" filter="url(#p-glow)"/>
+      <circle cx="90" cy="104" r="7" fill="#A5E4F8" filter="url(#p-glow)"/>
       <circle cx="90" cy="104" r="3.4" fill="#ffffff"/>
     </g>
 
     <g class="f" font-size="12" font-weight="700">
-      <rect x="790" y="88" width="74" height="32" rx="16" fill="#101B33" stroke="#2B3A66"/>
-      <text x="827" y="108" fill="#9FB6E8" text-anchor="middle">Qdrant</text>
+      <rect x="790" y="88" width="74" height="32" rx="16" fill="#232120" stroke="#3B3735"/>
+      <text x="827" y="108" fill="#B0ABA7" text-anchor="middle">Qdrant</text>
     </g>
-    <line x1="748" y1="104" x2="786" y2="104" stroke="#2B3A66" stroke-width="2" stroke-dasharray="3 4"/>
+    <line x1="748" y1="104" x2="786" y2="104" stroke="#3B3735" stroke-width="2" stroke-dasharray="3 4"/>
   </g>
 </svg>
